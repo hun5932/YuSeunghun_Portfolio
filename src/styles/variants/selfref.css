@@ -1,0 +1,189 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   selfref.css — 시안 C「자기참조」 (TRIH: 다크 + 회전 링 + 재귀 프레임 + 글리치)
+   ───────────────────────────────────────────────────────────────────────────
+   스펙 정본: _analysis/variants-spec.md §시안 C
+   계약: :root[data-variant="selfref"] 에서 tokens.css 의 --pf-* 원천만 재정의
+         + 이 시안 전용 장식(회전 링 conic / 재귀 프레임 / 글로우 / 워터마크 / 포탈).
+   모션 대응: 캔버스 글리치·포탈 전환은 src/motion/selfref.ts (pointer:fine + reduced-motion 게이트).
+             이 CSS 는 그 캔버스/오버레이가 얹힐 정적 골격과 순-CSS 회전 링을 제공.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── ① 원천 토큰 (다크 = 기본 색모드, 다크 퍼스트) ─── */
+:root[data-variant="selfref"] {
+  /* 표면 (void → panel) */
+  --pf-bg:          #05060A;  /* void 페이지 */
+  --pf-surface:     #0C0E14;  /* panel */
+  --pf-surface-2:   #141824;  /* panel-2 (승격) */
+  --pf-border:      #222838;  /* 헤어라인 */
+  --pf-border-soft: #171C28;  /* 옅은 구분선 */
+
+  /* 잉크 (fog → white) */
+  --pf-ink:         #E8EDF7;  /* 헤드/강조 (white) */
+  --pf-ink-2:       #C7CEDC;  /* 본문 (fog) */
+  --pf-ink-3:       #8A93A8;  /* 뮤트 (slate) */
+
+  /* 액센트 (cyan — 창발/self-attention) */
+  --pf-accent:      #48E0D0;
+  --pf-accent-2:    #6FF3E5;
+  --pf-accent-tint: rgba(72, 224, 208, 0.10);
+  --pf-on-accent:   #05060A;
+
+  /* 계측 수치 전용 — 글리치 크로마 red */
+  --pf-measure:     #E5091E;
+
+  /* 서체 — Space Grotesk 디스플레이 + 모노. 커스텀 폰트 미다운로드(규칙 ⑤):
+     시스템에 있으면 사용, 없으면 시스템 산스/모노 폴백. 한글 본문 Pretendard. */
+  --pf-font-display:    "Space Grotesk", "Pretendard Variable", Pretendard, ui-sans-serif, system-ui, sans-serif;
+  --pf-font-display-en: "Space Grotesk", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --pf-font-body:       "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pf-font-mono:       "JetBrains Mono", "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* ─── 시안 전용 장식 토큰 (계약 밖) ─── */
+  --pf-cyan:  #48E0D0;   /* self-attention */
+  --pf-red:   #E5091E;   /* 크로마 스플릿 */
+  --pf-gold:  #C9A24B;   /* 재귀 링 */
+  --pf-glow:  0 0 24px rgba(72, 224, 208, 0.35);
+}
+
+/* ─── 라이트 색모드 (선택 축 — 자기참조 다크의 주광 대응) ─── */
+:root[data-variant="selfref"][data-theme="light"] {
+  --pf-bg:          #F4F6FA;
+  --pf-surface:     #FFFFFF;
+  --pf-surface-2:   #E9EDF5;
+  --pf-border:      #D3DAE6;
+  --pf-border-soft: #E6EBF3;
+  --pf-ink:         #0C0E14;
+  --pf-ink-2:       #2A3140;
+  --pf-ink-3:       #5A6478;
+  --pf-accent:      #0FA595;   /* 라이트 배경 대비용 진한 청록 */
+  --pf-accent-2:    #12C0AD;
+  --pf-accent-tint: rgba(15, 165, 149, 0.10);
+  --pf-on-accent:   #FFFFFF;
+  --pf-measure:     #C40718;
+  --pf-glow:        0 0 20px rgba(15, 165, 149, 0.22);
+}
+
+/* ═══ ② 필름 그레인 — 정적 SVG feTurbulence 를 body 배경에 베이크 (rAF 금지) ═══ */
+:root[data-variant="selfref"] body {
+  background-color: var(--bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-attachment: fixed;
+}
+
+/* ═══ ③ 다크 크롬 / 글로우 유틸 ═══ */
+:root[data-variant="selfref"] .card {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: border-color .3s var(--ease), box-shadow .3s var(--ease), transform .3s var(--ease);
+}
+:root[data-variant="selfref"] .card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--pf-glow);
+  transform: translateY(-3px);
+}
+:root[data-variant="selfref"] .glow { box-shadow: var(--pf-glow); }
+:root[data-variant="selfref"] ::selection { background: var(--accent); color: var(--on-accent); }
+
+/* ═══ ④ 회전 링 — conic-gradient + @keyframes rotate ═══
+   TRIH 자기참조 모티프. scroll() 타임라인 우선(스크롤에 따라 회전) +
+   무한 회전 폴백(미지원 브라우저·초기 상태). 마스크로 '링'만 남긴다. */
+@keyframes pf-ring-rotate { to { transform: rotate(1turn); } }
+
+:root[data-variant="selfref"] .recur-ring {
+  --ring-w: 2px;
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--pf-cyan) 60deg,
+    transparent 140deg,
+    var(--pf-gold) 220deg,
+    transparent 300deg,
+    var(--pf-cyan) 360deg
+  );
+  /* 가운데를 뚫어 얇은 링만 남김 */
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--ring-w)), #000 calc(100% - var(--ring-w)));
+          mask: radial-gradient(farthest-side, transparent calc(100% - var(--ring-w)), #000 calc(100% - var(--ring-w)));
+  animation: pf-ring-rotate 18s linear infinite;   /* 폴백: 무한 회전 */
+  filter: drop-shadow(0 0 6px var(--pf-cyan-tint, rgba(72,224,208,.2)));
+}
+/* 이중 링(역방향) — 재귀 느낌 */
+:root[data-variant="selfref"] .recur-ring.is-reverse { animation-direction: reverse; animation-duration: 26s; }
+
+/* scroll-driven 우선 — 지원 시 스크롤 진행으로 회전 구동 */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :root[data-variant="selfref"] .recur-ring {
+      animation: pf-ring-rotate linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+}
+
+/* ═══ ⑤ 재귀 프레임 — 중첩 border + outline offset (Droste/이상한 고리) ═══ */
+:root[data-variant="selfref"] .recur-frame {
+  position: relative;
+  border: 1px solid var(--border);
+  outline: 1px solid var(--border-soft);
+  outline-offset: 6px;
+}
+:root[data-variant="selfref"] .recur-frame::before,
+:root[data-variant="selfref"] .recur-frame::after {
+  content: '';
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  pointer-events: none;
+}
+:root[data-variant="selfref"] .recur-frame::before { inset: 10px; opacity: .55; }
+:root[data-variant="selfref"] .recur-frame::after  { inset: 20px; opacity: .28; }
+
+/* ═══ ⑥ 모노 워터마크 라벨 — 대형 저채도 배경 텍스트 ═══ */
+:root[data-variant="selfref"] .watermark {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--ink-3);
+  opacity: 0.07;
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* ═══ ⑦ 글리치 캔버스 골격 — motion/selfref.ts 가 [data-glitch] 안에 캔버스 삽입 ═══
+   reduced-motion / 터치 환경에선 캔버스가 삽입되지 않아 <img> 원본이 그대로 보임. */
+:root[data-variant="selfref"] [data-glitch] { position: relative; overflow: hidden; }
+:root[data-variant="selfref"] .glitch-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ═══ ⑧ 재귀 포탈 전환 — clip-path circle 확장 (motion/selfref.ts 가 --click-x/y 세팅) ═══ */
+:root[data-variant="selfref"] .portal-overlay,
+.portal-overlay {   /* body 직속 오버레이라 variant 스코프 밖에서도 안전하게 */
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--pf-void, #05060A);
+  clip-path: circle(0% at var(--click-x, 50%) var(--click-y, 50%));
+  transition: clip-path 0.6s cubic-bezier(0.85, 0, 0.15, 1);
+  pointer-events: none;
+}
+.portal-overlay.is-open {
+  clip-path: circle(150% at var(--click-x, 50%) var(--click-y, 50%));
+}
+
+/* ═══ ⑨ reduced-motion — 회전·포탈 정지, 정적 상태 유지 ═══ */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-variant="selfref"] .recur-ring { animation: none !important; }
+  .portal-overlay { display: none !important; }
+}

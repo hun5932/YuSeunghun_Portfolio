@@ -1,0 +1,48 @@
+---
+// LangSwitcher.astro — ko ↔ en 전환. 현재 경로를 보존한다(splitLocale → localeHref).
+// 순수 <a> 링크 — JS 불필요, 정적/무JS 환경에서도 동작.
+import { splitLocale, localeHref } from '../../lib/url';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  /** 반대 로케일 대응 페이지 존재 여부. false 면 경로 보존 대신 반대 로케일 홈으로
+   *  보낸다(preview 등 en 부재 페이지의 /en/preview 404 방지 — M4). */
+  localeAlternate?: boolean;
+}
+const { locale, localeAlternate = true } = Astro.props;
+
+// 현재 pathname 에서 로케일을 벗겨 순수 경로를 얻고, 반대 로케일로 재조립.
+// 대응 페이지가 없으면(localeAlternate=false) 반대 로케일 홈('/')으로 폴백.
+const { path } = splitLocale(Astro.url.pathname);
+const other: Locale = locale === 'ko' ? 'en' : 'ko';
+const href = localeHref(other, localeAlternate ? path : '/');
+---
+
+<a class="lang-switch" href={href} aria-label={t(locale, 'a11y.langToggle')} hreflang={other}>
+  <span aria-hidden="true">{other === 'en' ? 'EN' : 'KO'}</span>
+</a>
+
+<style>
+  .lang-switch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding-inline: 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font: 500 var(--fz-xxs) / 1 var(--font-mono);
+    letter-spacing: 0.14em;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .lang-switch:hover { color: var(--ink); border-color: var(--ink-3); }
+
+  /* 터치타깃 확대 (≤560px): 34px 시각 원 유지, 투명 ::before 로 탭영역만 ~42px 확대. 라이트 시각 불변. */
+  @media (max-width: 560px) {
+    .lang-switch { position: relative; }
+    .lang-switch::before { content: ''; position: absolute; inset: -4px; border-radius: inherit; }
+  }
+</style>

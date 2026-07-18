@@ -1,0 +1,242 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Resume.astro — 이력서 한눈에(id=resume)
+//   facts.resume(0_FACTS v1.0 하류 투영)만 참조 — 하드코딩 0. 각 행 id 로 SSOT 역추적.
+//   레이아웃: 좌(경력 6줄) / 우(학력 + 교육·자격·병역) 2열 → 하단 기술 스킬 4열 스트립.
+//   · 전면 한지 라이트 단일 톤. 시맨틱 토큰만 사용(--ink/--accent/--surface/--border …).
+//   · 한글 word-break:keep-all · 합성 이탤릭 금지(.d2 가 font-synthesis:none) · 인쇄/모션 안전.
+// ═══════════════════════════════════════════════════════════════════════════
+import facts from '../../data/facts.json';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+const R = facts.resume;
+
+// 레주메 리드 나열 — 항목과 구분자를 분리해 .seg 로 항목 단위 개행만 허용
+const ledeItems = locale === 'en'
+  ? ['6+ years', 'AI service planning', 'financial-cloud operations', 'interdisciplinary research']
+  : ['경력 6년+', 'AI 서비스 기획', '금융 클라우드 운영', '학제간 연구'];
+const ledeSeps = ['·', '×', '×'];
+---
+
+<section id="resume" class="sec resume" aria-labelledby="resume-title">
+  <div class="wrap">
+    <header class="rs-head reveal">
+      <span class="k">Résumé</span>
+      <h2 id="resume-title" class="d2 rs-title">{t(locale, 'resume.title')}</h2>
+      <p class="rs-sub">
+        {/* 나열 문구 — 항목+구분자를 .seg 로 묶어 항목 단위로만 개행(어중간한 개행 방지) */}
+        {ledeItems.map((it, i) => (
+          <>
+            <span class="seg">{it}{i < ledeSeps.length ? ` ${ledeSeps[i]}` : ''}</span>{' '}
+          </>
+        ))}
+      </p>
+    </header>
+
+    <div class="rs-grid">
+      <!-- 좌: 경력 -->
+      <div class="rs-block reveal">
+        <h3 class="rs-block-title">{t(locale, 'resume.blockCareer')}</h3>
+        <ul class="rs-rows">
+          {R.career.map((row) => (
+            <li class="rs-row">
+              <div class="rs-row-main">
+                <p class="rs-org">{row.org[locale]}</p>
+                <p class="rs-desc">{row.desc[locale]}</p>
+              </div>
+              <span class="rs-period mono">{row.period[locale]}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <!-- 우: 학력 + 교육·자격·병역 -->
+      <div class="rs-col-right">
+        <div class="rs-block reveal" style="--i:1;">
+          <h3 class="rs-block-title">{t(locale, 'resume.blockEducation')}</h3>
+          <ul class="rs-rows">
+            {R.education.map((row) => (
+              <li class="rs-row">
+                <div class="rs-row-main">
+                  <p class="rs-org">{row.org[locale]}</p>
+                  <p class="rs-desc">{row.desc[locale]}</p>
+                </div>
+                <span class="rs-period mono">{row.period[locale]}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="rs-block reveal" style="--i:2;">
+          <h3 class="rs-block-title">{t(locale, 'resume.blockCerts')}</h3>
+          <ul class="rs-certs">
+            {R.certs.map((c) => (
+              <li class="rs-cert">
+                <span class="rs-cert-tag mono">{c.tag[locale]}</span>
+                <span class="rs-cert-text">{c.text[locale]}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하단: 기술 스킬 4열 -->
+    <div class="rs-block rs-skills-block reveal" style="--i:1;">
+      <h3 class="rs-block-title">{t(locale, 'resume.blockSkills')}</h3>
+      <div class="rs-skills">
+        {R.skills.map((s) => (
+          <div class="rs-skill">
+            <p class="rs-skill-label">{s.label[locale]}</p>
+            <p class="rs-skill-items">{s.items[locale]}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* 옅은 톤 밴드 — Timeline 과 연속(이력 묶음), 사이 헤어라인은 유지 */
+  .resume {
+    background: var(--surface);
+    background: color-mix(in srgb, var(--surface) 45%, var(--bg)); /* 반 단계 더 옅게 */
+  }
+
+  .rs-head { margin-bottom: clamp(30px, 4vw, 48px); }
+  .rs-title { margin-top: 14px; }
+  .rs-sub {
+    margin-top: 12px;
+    font-size: var(--fz-sm);
+    color: var(--ink-3);
+    word-break: keep-all;
+  }
+
+  /* 2열 그리드 — 좌 경력 / 우 (학력+자격) */
+  .rs-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(18px, 2.5vw, 28px);
+    align-items: start;
+  }
+  .rs-col-right {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(18px, 2.5vw, 28px);
+  }
+
+  .rs-block {
+    background: var(--bg); /* 밴드 위 플레이트 — 동화 방지 */
+    border: 1px solid var(--border);
+    padding: clamp(20px, 3vw, 30px);
+  }
+  .rs-block-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-xl);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    padding-bottom: 14px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--border-soft);
+    word-break: keep-all;
+  }
+
+  /* 경력·학력 행 */
+  .rs-rows { display: flex; flex-direction: column; }
+  .rs-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 14px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .rs-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .rs-row-main { min-width: 0; }
+  .rs-org {
+    font-size: var(--fz-sm);
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.4;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  .rs-desc {
+    margin-top: 3px;
+    font-size: var(--fz-xs);
+    color: var(--ink-3);
+    line-height: 1.6;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  .rs-period {
+    flex: none;
+    font-size: var(--fz-xxs);
+    color: var(--ink-3);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  /* 교육·자격·병역 목록 */
+  .rs-certs { display: flex; flex-direction: column; gap: 11px; }
+  .rs-cert {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+    align-items: baseline;
+  }
+  .rs-cert-tag {
+    font-size: var(--fz-xxs);
+    color: var(--accent-text, var(--accent));
+    letter-spacing: 0.02em;
+    text-align: left;
+    word-break: keep-all;
+  }
+  .rs-cert-text {
+    font-size: var(--fz-xs);
+    color: var(--ink-2);
+    line-height: 1.6;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  /* 기술 스킬 4열 */
+  .rs-skills-block { margin-top: clamp(18px, 2.5vw, 28px); }
+  .rs-skills {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(16px, 2.4vw, 30px) clamp(20px, 3vw, 36px);
+    margin-top: 6px;
+  }
+  .rs-skill-label {
+    font-family: var(--font-mono);
+    font-size: var(--fz-xxs);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-text, var(--accent));
+    margin-bottom: 8px;
+    word-break: keep-all;
+  }
+  .rs-skill-items {
+    font-size: var(--fz-xs);
+    color: var(--ink-2);
+    line-height: 1.7;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  /* ── 반응형 폴백 ── */
+  @media (max-width: 900px) {
+    .rs-grid { grid-template-columns: 1fr; }
+    .rs-skills { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 520px) {
+    .rs-skills { grid-template-columns: 1fr; }
+    .rs-row { flex-direction: column; gap: 4px; }
+    .rs-period { align-self: flex-start; }
+  }
+</style>

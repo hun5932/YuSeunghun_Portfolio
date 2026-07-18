@@ -1,0 +1,91 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// TrackBridge.astro — 트랙 분기 브리지
+//   홈에서 별도 심화 페이지로 가는 카드 2장: /research(연구자 트랙)·/dev(개발 트랙).
+//   · 내부 라우팅이므로 localeHref 로 base + 로케일 접두 안전 처리.
+//   · Nav 의 #research/#dev 인라인 앵커와 별개(그 섹션은 다른 컴포넌트가 소유).
+// ═══════════════════════════════════════════════════════════════════════════
+import { t, type Locale } from '../../i18n/ui';
+import { localeHref } from '../../lib/url';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+const cards = [
+  {
+    href: localeHref(locale, '/research'),
+    titleKey: 'bridge.research.title',
+    descKey: 'bridge.research.desc',
+    tag: 'TRIH · DOI',
+  },
+  {
+    href: localeHref(locale, '/dev'),
+    titleKey: 'bridge.dev.title',
+    descKey: 'bridge.dev.desc',
+    tag: 'infra-lab · PKM',
+  },
+] as const;
+
+const enterLabel = { ko: '들어가기', en: 'Enter' }[locale];
+---
+
+<section class="sec track-bridge" aria-label={locale === 'ko' ? '트랙 선택' : 'Track selection'}>
+  <div class="wrap">
+    <div class="bridge-grid">
+      {cards.map((c, i) => (
+        <a class="card bridge-card reveal" href={c.href} style={`--i:${i}`}>
+          <span class="k bridge-tag">{c.tag}</span>
+          <h2 class="bridge-title d2">{t(locale, c.titleKey)}</h2>
+          <p class="bridge-desc">{t(locale, c.descKey)}</p>
+          <span class="bridge-enter mono">
+            {enterLabel}
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M3 8h9M8 4l4 4-4 4" />
+            </svg>
+          </span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .bridge-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(14px, 2vw, 22px);
+  }
+  .bridge-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: clamp(28px, 4vw, 44px);
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease),
+                background var(--dur) var(--ease);
+  }
+  .bridge-card:hover { border-color: var(--accent); transform: translateY(-4px); background: var(--surface-2); }
+  .bridge-tag { color: var(--ink-3); }
+  .bridge-title { font-size: clamp(1.5rem, 3vw, 2.2rem); }
+  .bridge-desc {
+    font-size: var(--fz-sm);
+    line-height: 1.7;
+    color: var(--ink-3);
+    max-width: 40ch;
+  }
+  .bridge-enter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: var(--fz-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .bridge-enter svg { transition: transform var(--dur) var(--ease); }
+  .bridge-card:hover .bridge-enter svg { transform: translateX(3px); }
+
+  @media (max-width: 720px) {
+    .bridge-grid { grid-template-columns: 1fr; }
+  }
+</style>

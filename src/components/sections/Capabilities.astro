@@ -1,0 +1,204 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Capabilities.astro — 역량(id=capabilities)
+//   제목: "6개의 역량 카테고리, 하나의 사고법" ({n}→6 — 실제 카드 수와 일치.
+//         v1 의 "9개" 헤드라인 대 6카드 불일치를 정정)
+//   2열 그리드 6카드. 카드 제목은 i18n(capabilities.c1..c6), 세부 행은 pick(ko,en) 리터럴.
+//   · 세부 항목은 v1 #skills(1225~1320)에서 이관하되, 수치는 facts.json 정본과 대조:
+//       SR 400+ (CAR-02) · SLA 34개 99.9% (CAR-03) · PKM 노트 4,300+ (SOS-01)
+//     v1 의 구식/미검증 표기(SR 150+, 노트 1,200+, CSU 교환)는 폐기.
+//   · 스탯 3블록(교육시간/SR/노트)은 넣지 않는다(숫자 최소화 — 카드 내 자격 수치만 허용).
+// ═══════════════════════════════════════════════════════════════════════════
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+// i18n 키에 없는 카드 세부 행은 컴포넌트 내 리터럴로 해결(ui.ts 무수정 계약).
+const pick = (ko: string, en: string) => (locale === 'ko' ? ko : en);
+
+// 실제 카드 수(6)로 {n} 치환 — 제목·카드 수 일치.
+const title = t(locale, 'capabilities.title').replace('{n}', '6');
+
+interface Row { label: string; value: string }
+interface Cap { titleKey: 'capabilities.c1' | 'capabilities.c2' | 'capabilities.c3' | 'capabilities.c4' | 'capabilities.c5' | 'capabilities.c6'; core?: boolean; rows: Row[] }
+
+const caps: Cap[] = [
+  {
+    titleKey: 'capabilities.c1',
+    core: true,
+    rows: [
+      { label: pick('LLM 활용', 'LLM use'),       value: 'Claude · GPT · LangGraph' },
+      { label: pick('프레임워크', 'Framework'),    value: 'LangChain · RAG' },
+      { label: pick('통합', 'Integration'),        value: 'Claude Code · MCP' },
+      { label: 'ML / DL',                          value: 'Scikit-learn · TF · Keras' },
+    ],
+  },
+  {
+    titleKey: 'capabilities.c2',
+    rows: [
+      { label: pick('기획', 'Planning'),           value: pick('Web/App MVP 정의', 'Web/App MVP definition') },
+      { label: pick('프레임워크', 'Framework'),    value: 'JTBD · Flywheel · TAM/SAM' },
+      { label: pick('리서치', 'Research'),         value: pick('퍼소나 · User Journey', 'Persona · User Journey') },
+      { label: pick('디자인', 'Design'),           value: 'Figma · IA · Flowchart' },
+    ],
+  },
+  {
+    titleKey: 'capabilities.c3',
+    rows: [
+      { label: 'Python',                           value: pick('데이터 분석 · AI 구현', 'Data analysis · AI impl.') },
+      { label: pick('시각화', 'Visualization'),    value: 'Matplotlib · Seaborn · PBI' },
+      { label: 'Excel',                            value: pick('VLOOKUP · 피벗 · SUMIF', 'VLOOKUP · Pivot · SUMIF') },
+      { label: pick('버전관리', 'Version control'),value: 'Git · GitHub' },
+    ],
+  },
+  {
+    titleKey: 'capabilities.c4',
+    rows: [
+      // facts CAR-03: K리전 34개 서비스 SLA 99.9%+
+      { label: 'SLA',                              value: pick('34개 서비스 · 99.9%+', '34 services · 99.9%+') },
+      // facts CAR-02: ITSM SR 누적 400건+
+      { label: 'ITSM',                             value: pick('SR 400+ 접수·분류·등록', '400+ SR intake·triage·log') },
+      { label: pick('클라우드', 'Cloud'),          value: pick('통합 클라우드 리전 운영', 'Integrated cloud region ops') },
+      // facts CAR-04: 5레이어 SR 분류 체계 · ITIL
+      { label: pick('변경관리', 'Change mgmt'),    value: pick('5레이어 분류 · ITIL', '5-layer taxonomy · ITIL') },
+    ],
+  },
+  {
+    titleKey: 'capabilities.c5',
+    rows: [
+      // facts SOS-01: 노트 4,300+ (2026.07 실측)
+      { label: 'Obsidian',                         value: pick('PKM 4,300+ 노트', 'PKM 4,300+ notes') },
+      { label: pick('온톨로지', 'Ontology'),       value: pick('온톨로지 · PARA · AI 통합', 'Ontology · PARA · AI') },
+      { label: pick('자동화', 'Automation'),       value: 'Templater · QuickAdd · Dataview' },
+      { label: pick('AI 통합', 'AI integration'),  value: pick('RAG 파이프라인', 'RAG pipeline') },
+    ],
+  },
+  {
+    titleKey: 'capabilities.c6',
+    rows: [
+      // facts LAN-01: TOEIC 775 · OPIc IM2 · 조계종 외국어 B등급
+      { label: 'TOEIC',                            value: '775' },
+      { label: 'OPIc',                             value: 'IM2' },
+      { label: pick('자격', 'Certification'),      value: pick('조계종 외국어 B등급', 'Jogye lang. cert. (B)') },
+      // facts JIK-02: 30개국+ 외국인 프로그램 총괄
+      { label: pick('실무', 'Field'),              value: pick('30개국+ 프로그램 운영', 'Programs for 30+ countries') },
+    ],
+  },
+];
+---
+
+<section id="capabilities" class="sec capabilities" aria-labelledby="capabilities-title">
+  <div class="wrap capabilities-in">
+    <!-- 좌: sticky 라벨 + 제목 -->
+    <div class="capabilities-lead">
+      <div class="capabilities-lead-inner reveal">
+        <span class="k">{t(locale, 'capabilities.label')}</span>
+        <h2 id="capabilities-title" class="d2 capabilities-title">{title}</h2>
+      </div>
+    </div>
+
+    <!-- 우: 6카드 2열 그리드 -->
+    <div class="cap-grid">
+      {caps.map((c, i) => (
+        <article class="card cap-card reveal" style={`--i:${i % 6}`}>
+          <div class="cap-head">
+            <h3 class="cap-title">{t(locale, c.titleKey)}</h3>
+            {c.core && <span class="cap-core mono" aria-label="Core capability">★ Core</span>}
+          </div>
+          <dl class="cap-rows">
+            {c.rows.map((r) => (
+              <div class="cap-row">
+                <dt class="cap-row-label">{r.label}</dt>
+                <dd class="cap-row-value">{r.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .capabilities-in {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    gap: clamp(36px, 5vw, 72px);
+    align-items: start;
+  }
+
+  /* 좌측 sticky 컬럼 */
+  .capabilities-lead-inner { position: sticky; top: clamp(88px, 12vh, 128px); }
+  .capabilities-title { margin-top: 16px; max-width: 16ch; }
+
+  /* 우측 카드 그리드 */
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(14px, 2vw, 20px);
+  }
+  .cap-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+  .cap-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+
+  .cap-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  /* 카드 제목 세리프 승격 — 사이트 카드 제목 언어(Projects/Resume/FR 20·Timeline/Philosophy 24)와 통일.
+     위계 회복(행 라벨 --fz-xs 대비)을 위해 display 세리프 18px/400. 2열 밀도 유지 위해 18px(범위 하단). */
+  .cap-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-lg);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    word-break: keep-all;
+  }
+  .cap-core {
+    margin-left: auto;
+    flex: none;
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.06em;
+    color: var(--accent-text, var(--accent));
+    white-space: nowrap;
+  }
+
+  .cap-rows { display: flex; flex-direction: column; gap: 9px; }
+  .cap-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .cap-row-label {
+    flex: none;
+    font-size: var(--fz-xs);
+    color: var(--ink-3);
+    word-break: keep-all;
+  }
+  .cap-row-value {
+    font-size: var(--fz-xs);
+    line-height: 1.5;
+    color: var(--ink-2);
+    text-align: right;
+    word-break: keep-all;
+  }
+
+  @media (max-width: 900px) {
+    .capabilities-in { grid-template-columns: 1fr; }
+    .capabilities-lead-inner { position: static; }
+  }
+  @media (max-width: 560px) {
+    .cap-grid { grid-template-columns: 1fr; }
+  }
+</style>

@@ -1,0 +1,110 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// FigLoop.astro — 히어로 로테이터 3번째 레이어 (이상한 고리 / 중첩 재귀 프레임)
+//   출처: _reference v2evolved Hero.astro 인라인 .loop SVG(재귀 rect 6 · 점선 링 · ∞
+//         · radial fade)를 자립 컴포넌트로 격상. v3 실화면 값 그대로 이식.
+//   · 재귀 사각 고리 6겹: 각 겹 rotate+translate+scale 누적(자기 자신을 담는 구조).
+//     불투명도 0.20→0.85 로 안쪽일수록 진하게(깊이감).
+//   · 이중 링 힌트: 점선 원(∞ 모티프 — Nav 로고와 호응) + 중앙 ∞ 글리프.
+//   · 소실 페이드: 위치 고정 라디얼(--bg)로 바깥 테두리를 배경에 녹임.
+//   · 회전: 재귀 네스트 정방향 16s · 점선 링 역방향 28s(v3 실화면 값). reduced-motion 정지.
+//   · 순수 장식(aria-hidden). JS 0, CSS @keyframes 만. 시맨틱 토큰만(--accent/--ink-3/--bg).
+// props:
+//   locale : 형제 도판과 시그니처 통일용(본 도판은 텍스트 라벨이 ∞ 뿐이라 실질 동일)
+//   class  : 배치용 유틸 클래스 패스스루
+// ═══════════════════════════════════════════════════════════════════════════
+interface Props {
+  locale?: 'ko' | 'en';
+  class?: string;
+}
+const { class: className = '' } = Astro.props;
+// 고유 id 프리픽스 — 한 페이지 다중 인스턴스 gradient 충돌 방지
+const uid = 'fl-' + Math.random().toString(36).slice(2, 8);
+
+// 재귀 사각 고리 6겹 — 각 겹 누적 rotate·translate·scale(자기유사). v3 실화면 값.
+const rings = [
+  { op: 0.2,  t: '' },
+  { op: 0.3,  t: 'rotate(12 100 100) translate(18 18) scale(0.82)' },
+  { op: 0.42, t: 'rotate(24 100 100) translate(34 34) scale(0.66)' },
+  { op: 0.55, t: 'rotate(36 100 100) translate(48 48) scale(0.52)' },
+  { op: 0.7,  t: 'rotate(48 100 100) translate(60 60) scale(0.40)' },
+  { op: 0.85, t: 'rotate(60 100 100) translate(70 70) scale(0.30)' },
+];
+---
+
+<div class={`fig-loop ${className}`} aria-hidden="true">
+  <svg viewBox="0 0 200 200" class="fig-loop-svg" focusable="false">
+    <defs>
+      {/* 소실 페이드 — 위치 고정 라디얼(바깥 테두리를 배경색에 녹임) */}
+      <radialGradient id={`${uid}-fade`} cx="50%" cy="50%" r="52%">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity="0" />
+        <stop offset="78%" stop-color="var(--accent)" stop-opacity="0" />
+        <stop offset="100%" stop-color="var(--bg)" stop-opacity="0.9" />
+      </radialGradient>
+    </defs>
+
+    {/* 재귀적으로 축소·회전하는 사각 고리 — 자기 자신을 포함하는 구조(정방향 16s) */}
+    <g class="fl-nest" fill="none" stroke="var(--accent)" stroke-width="0.8"
+       style="transform-origin:100px 100px">
+      {rings.map((r) => (
+        <rect x="10" y="10" width="180" height="180" opacity={r.op} transform={r.t || undefined} />
+      ))}
+    </g>
+
+    {/* 이중 링 + ∞ (Nav 로고 모티프와 호응) — 점선 링 역방향 28s */}
+    <circle cx="100" cy="100" r="26" fill="none" stroke="var(--ink-3)" stroke-width="0.8"
+            stroke-dasharray="3 4" class="fl-ring" style="transform-origin:100px 100px" />
+    <text x="100" y="108" text-anchor="middle" fill="var(--accent)" font-size="30"
+          style="font-family:var(--font-display-en);font-style:italic">∞</text>
+
+    {/* 소실 페이드 오버레이(정적 — 회전과 무관하게 고정) */}
+    <rect x="0" y="0" width="200" height="200" fill={`url(#${uid}-fade)`} />
+  </svg>
+
+  {/* 하단 캡션 pill — 형제 도판과 동일 리듬 */}
+  <div class="fl-caption">
+    <span>Strange&nbsp;Loop&nbsp;·&nbsp;Nested&nbsp;Recursion</span>
+  </div>
+</div>
+
+<style>
+  .fig-loop {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin-inline: auto;
+    aspect-ratio: 1 / 1;
+  }
+  .fig-loop-svg { display: block; width: 100%; height: 100%; }
+
+  /* 하단 캡션 pill */
+  .fl-caption {
+    position: absolute;
+    left: 50%;
+    bottom: 4%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 16px;
+    white-space: nowrap;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
+  }
+  .fl-caption span {
+    font-family: var(--font-mono);
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-text, var(--accent));
+  }
+
+  /* 회전 — 재귀 네스트 정방향 16s / 점선 링 역방향 28s (v3 실화면 값) */
+  .fl-nest { animation: fl-spin 16s linear infinite; }
+  .fl-ring { animation: fl-spin 28s linear infinite reverse; }
+  @keyframes fl-spin { to { transform: rotate(360deg); } }
+
+  /* 절대 규칙: 모션 최소화 선호 시 전 애니메이션 정지 */
+  @media (prefers-reduced-motion: reduce) {
+    .fl-nest, .fl-ring { animation: none !important; }
+  }
+</style>

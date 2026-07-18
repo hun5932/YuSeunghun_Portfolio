@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  og-default.svg — 브랜드 Open Graph 이미지 (1200×630).
+  한지 배경(#FAF6EC) + 옻칠골드 렘니스케이트(∞, TRIH 자기참조 모티프) + 이름·헤드라인.
+  색 토큰은 variants-spec 시안 A 팔레트 준거: paper #FAF6EC / ink #1B1917 / accent #A17C3A / bright #C9A24B.
+
+  TODO(self-host 단계): 소셜 스크레이퍼 호환을 위해 PNG(1200×630) 변환본을 함께 배치할 것.
+    예) resvg og-default.svg -o og-default.png  또는  sharp/rsvg-convert.
+    변환 후 Seo.astro 의 기본 image 를 '/og/og-default.png' 로 교체(SVG 는 일부 스크레이퍼 미지원).
+  한글 글리프는 뷰어 시스템 폰트에 의존한다(SVG 임베드 폰트 없음) — PNG 변환 시 폰트 지정으로 고정.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img"
+     aria-label="유승훈 Seunghun Yu — AI 서비스 기획자 PM 포트폴리오">
+  <defs>
+    <!-- 한지 미세 그레인 (정적 feTurbulence, 저밀도 웜톤) -->
+    <filter id="hanji" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" stitchTiles="stitch" result="n"/>
+      <feColorMatrix in="n" type="matrix"
+        values="0 0 0 0 0.42  0 0 0 0 0.36  0 0 0 0 0.22  0 0 0 0.04 0"/>
+    </filter>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#C9A24B"/>
+      <stop offset="0.55" stop-color="#A17C3A"/>
+      <stop offset="1" stop-color="#8A6A2E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 배경 -->
+  <rect width="1200" height="630" fill="#FAF6EC"/>
+  <rect width="1200" height="630" filter="url(#hanji)" opacity="0.7"/>
+  <!-- 상하 한지 가장자리 페이드 느낌의 얇은 골드 룰 -->
+  <rect x="80" y="120" width="120" height="3" fill="url(#gold)"/>
+
+  <!-- 렘니스케이트 ∞ (자기참조 모티프) — 우측 상단, 절제된 크기 -->
+  <g transform="translate(910,210)" fill="none" stroke="url(#gold)" stroke-width="10" stroke-linecap="round" opacity="0.92">
+    <path d="M -110,0 C -110,-58 -18,-58 0,0 C 18,58 110,58 110,0 C 110,-58 18,-58 0,0 C -18,58 -110,58 -110,0 Z"/>
+  </g>
+
+  <!-- 텍스트 블록 -->
+  <g font-family="'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif">
+    <!-- eyebrow (모노 라벨) -->
+    <text x="80" y="112" font-family="'SF Mono','JetBrains Mono','IBM Plex Mono',ui-monospace,monospace"
+          font-size="22" letter-spacing="8" fill="#A17C3A">PORTFOLIO</text>
+
+    <!-- 이름 (한글, 대) -->
+    <text x="78" y="290" font-size="132" font-weight="700" fill="#1B1917" letter-spacing="2">유승훈</text>
+    <!-- 영문 병기 -->
+    <text x="82" y="356" font-size="44" font-weight="500" fill="#5A5348" letter-spacing="1">Seunghun Yu</text>
+
+    <!-- 헤드라인 -->
+    <text x="82" y="446" font-size="40" font-weight="600" fill="#1B1917">AI 서비스 기획자 · PM</text>
+    <text x="82" y="498" font-size="28" font-weight="400" fill="#5A5348">실무 · 연구 · 시스템 3축 — AI Service Planner · PM</text>
+  </g>
+
+  <!-- 하단 도메인 -->
+  <text x="80" y="580" font-family="'SF Mono','JetBrains Mono','IBM Plex Mono',ui-monospace,monospace"
+        font-size="22" letter-spacing="2" fill="#5A5348">hun5932.github.io/YuSeunghun_Portfolio</text>
+</svg>

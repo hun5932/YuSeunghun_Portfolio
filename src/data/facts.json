@@ -1,0 +1,98 @@
+{
+  "_meta": {
+    "facts_ssot_version": "1.0",
+    "source": "projected from the fact SSOT — do not edit directly",
+    "projected": "2026-07-18",
+    "rule": "Generated projection of verified facts. Do not edit directly — re-project after the source of record is revised."
+  },
+  "profile": {
+    "name": { "ko": "유승훈", "en": "Seunghun Yu" },
+    "headline": {
+      "ko": "AI 서비스 기획자 · PM — 실무·연구·시스템 3축",
+      "en": "AI Service Planner · PM — practice, research, systems"
+    },
+    "location": { "ko": "서울 · 원격 가능", "en": "Seoul, KR · remote-friendly" },
+    "email_career": "dbtmdgns1595@naver.com",
+    "email_academic": "yshun1595@gmail.com",
+    "orcid": "0009-0000-6161-7563",
+    "links": {
+      "github": "https://github.com/hun5932",
+      "infraLab": "https://github.com/hun5932/infra-lab",
+      "paperRepo": "https://github.com/hun5932/self-reference-possibility-of-mind",
+      "zenodo": "https://doi.org/10.5281/zenodo.21006608",
+      "osf": "https://osf.io/69fv3/",
+      "photo500px": "https://500px.com/seunghunyu",
+      "videoJikjisa1": "https://youtu.be/Sv5RCnyo37E",
+      "videoJikjisa2": "https://youtu.be/SIkov6gH2GU",
+      "apecArticle": "https://www.wikitree.co.kr/articles/979672"
+    }
+  },
+  "measured": [
+    { "factId": "CAR-02", "value": "400+", "label": { "ko": "ITSM SR 누적 처리 (2026.06)", "en": "ITSM requests handled (Jun 2026)" } },
+    { "factId": "CAR-03", "value": "99.9%", "label": { "ko": "K리전 34개 서비스 SLA 가동률 관리", "en": "SLA availability across 34 services" } },
+    { "factId": "THE-04", "value": "109k", "label": { "ko": "논문 본문 글자 수 · 참고문헌 70편", "en": "thesis characters · 70 references" } },
+    { "factId": "SOS-01", "value": "4,300+", "label": { "ko": "지식 시스템 노트 (2026.07 실측)", "en": "PKM notes (measured Jul 2026)" } },
+    { "factId": "INF-01", "value": "1.2s → 0s", "label": { "ko": "무중단 배포 순단 실측 (infra-lab)", "en": "deploy downtime, measured (infra-lab)" } },
+    { "factId": "TRA-01", "value": "960h", "label": { "ko": "AI 서비스 기획 교육 이수", "en": "AI product planning training" } }
+  ],
+  "claims": {
+    "CAR-01": { "ko": "㈜씨에스리 클라우드사업본부 대리 — 금융그룹 통합 클라우드 운영 (2026.01~)", "en": "Cloud Business Div., CSLEE — Integrated cloud operations for a financial group (since Jan 2026)" },
+    "CAR-02": { "ko": "ITSM SR 접수·등록·분류 — 누적 400건+(2026.06 기준), 월평균 80건+", "en": "400+ ITSM service requests processed (as of Jun 2026), 80+/month" },
+    "CAR-03": { "ko": "K리전 34개 서비스 SLA 보고서 작성·가동률 99.9%+ 품질 관리", "en": "SLA reporting & 99.9%+ availability management across 34 services" },
+    "CAR-04": { "ko": "5레이어 SR 분류 체계 설계·운영 가이드 30종+ 작성·변경관리(ITIL) 검토", "en": "Designed a 5-layer SR taxonomy; authored 30+ ops guides; ITIL change reviews" },
+    "JIK-01": { "ko": "직지사 템플스테이 외국인 팀장 (2025.03 ~ 2025.09)", "en": "Foreign-programs lead, Jikjisa Templestay (Mar–Sep 2025)" },
+    "JIK-02": { "ko": "연인원 1만+ 규모 본사 템플스테이 운영 — 30개국+ 외국인 프로그램 총괄, 15명 팀 관리", "en": "Ran a 10k+ visitors/yr templestay — led programs for guests from 30+ countries, managed a team of 15" },
+    "JIK-03": { "ko": "LLM 기반 업무 지식 시스템 'JiksaTS Master AI' 1인 기획·구축 — 운영 매뉴얼·재무 가이드·업무 프로세스를 지식베이스로 체계화하고 LLM이 참조하는 실무 보조 시스템으로 구성", "en": "Designed & built 'JiksaTS Master AI' solo — systematized manuals, finance guides and workflows into an LLM-referenced knowledge base" },
+    "CET-02": { "ko": "등록상표 2건 보유 (CETANA, 제20·35류 — KIPRIS 확인)", "en": "2 registered trademarks (CETANA; classes 20 & 35, verified on KIPRIS)" },
+    "CET-03": { "ko": "2024 경북 청년창업가 육성사업 선정 — 정부 협약금 1,200만원 사업 완주·정산 종결", "en": "Selected for a provincial startup grant (₩12M) — completed & closed out" },
+    "CET-04": { "ko": "APEC 경주 연계 프리미엄 관광상품 개발 프로젝트 — '신라의 빛' 팀장, 상위 10팀 선정", "en": "APEC Gyeongju premium-tourism project — team lead of 'Silla Lumière', top-10 selection" },
+    "CET-05": { "ko": "나전칠기 시제품 자체 제작 · 브랜드 CI 풀패키지 구축", "en": "Self-produced najeon-lacquer prototypes; built the full brand CI package" },
+    "THE-01": { "ko": "「자기참조와 마음의 가능성」 — 임계 재귀적 동형성 가설(TRIH) 제안, 학사 졸업논문", "en": "Self-Reference and the Possibility of Mind — proposing TRIH (Bachelor's thesis)" },
+    "THE-02": { "ko": "Zenodo DOI 10.5281/zenodo.21006608 게시 (2026.06) · OSF · GitHub 공개", "en": "Published on Zenodo (DOI 10.5281/zenodo.21006608, Jun 2026) · OSF · GitHub" },
+    "THE-03": { "ko": "arXiv 등재 절차 진행 중 · Leonardo·Cognitive Science 계열 학술지 투고 준비", "en": "arXiv listing in progress; preparing journal submissions (Leonardo, Cognitive Science)" },
+    "THE-04": { "ko": "본문 약 109,000자 · 참고문헌 70편(전부 peer-reviewed) · 도판 19점 전부 자체 제작 · 영문판 3종", "en": "~109k characters · 70 peer-reviewed references · 19 self-made figures · 3 English editions" },
+    "PER-01": { "ko": "LLM 심리상담·매칭 서비스 '마음들이(AI PERSO)' 총괄 — LangChain·MMPI-2-RF 프로파일링 MVP (2024 해커톤)", "en": "Led 'AI PERSO', an LLM counseling & matching MVP — LangChain, MMPI-2-RF profiling (2024 hackathon)" },
+    "HOB-01": { "ko": "AI 취미 매칭 플랫폼 '취미랑' — 기획·설계 정본화 완료, 개발 착수 전", "en": "'HobbyBuddy' AI hobby-matching platform — planning & system design finalized, pre-development" },
+    "SOS-01": { "ko": "개인 지식 시스템 SEUNGHUN OS — 노트 4,300+ (2026.07 실측), 온톨로지·PARA·AI 통합 설계", "en": "SEUNGHUN OS personal knowledge system — 4,300+ notes (measured Jul 2026), ontology + PARA + AI integration" },
+    "INF-01": { "ko": "infra-lab 3종 — 단일 인스턴스 패치 순단 1.2초 vs k8s 무중단 0초 실증 (GitHub 공개 실측)", "en": "infra-lab ×3 — measured 1.2s downtime (single instance) vs 0s (k8s rolling), public on GitHub" },
+    "EDU-01": { "ko": "동국대(WISE) 고고미술사학 — 2026.08 졸업예정, 졸업논문 제출 완료", "en": "B.A. Archaeology & Art History, Dongguk Univ. (WISE) — graduating Aug 2026, thesis submitted" },
+    "TRA-01": { "ko": "ESTsoft AI 서비스 기획자 양성 과정 960시간 수료 (2024)", "en": "Completed 960h AI service-planner program, ESTsoft (2024)" },
+    "LAN-01": { "ko": "TOEIC 775 · OPIc IM2 · 조계종 외국어 능력평가 B등급", "en": "TOEIC 775 · OPIc IM2 · Jogye Order foreign-language cert. (grade B)" },
+    "CET-01": { "ko": "세타나(CETANA) 대표 — 전통공예 럭셔리 브랜드 0→1 (2024.05~2025.03)", "en": "Founder of CETANA — traditional-craft luxury brand, 0→1 (May 2024–Mar 2025)" },
+    "CAR-07": { "ko": "진공인중개사사무소 부동산팀 — 상가·사무실 중개·시장 동향 분석 (2023)", "en": "Jingongin Realty, commercial team — retail/office brokerage & market analysis (2023)" },
+    "CAR-08": { "ko": "동국대 산학협력단 청년드림CEO — 3D프린팅 옻칠공예 창업 대표, 초기창업패키지 서류 통과 (2021~2022)", "en": "Dongguk Univ. Industry-Academic Foundation, Youth Dream CEO — founded a 3D-printed ottchil-craft venture; passed the Early-Stage Startup Package document review (2021–2022)" },
+    "CAR-09": { "ko": "해커스교육그룹 — 교육 콘텐츠 촬영·영상 제작 지원 (2016~2017)", "en": "Hackers Education Group — production support for educational video content (2016–2017)" },
+    "CAR-10": { "ko": "의무경찰 병장 만기 전역 (2017.11~2019.07)", "en": "Completed mandatory service as a conscripted police sergeant (Nov 2017–Jul 2019)" },
+    "EDU-02": { "ko": "California State University, Sacramento 교환학생 수료 (2014) · 동국대 GPA 3.49/4.5", "en": "Exchange semester at California State University, Sacramento (2014) · GPA 3.49/4.5" },
+    "TRA-02": { "ko": "인공지능(AI 기술활용) 중급 160시간 — 한국IT비즈니스진흥협회 (2021)", "en": "AI (applied) intermediate program, 160h — Korea IT Business Promotion Assoc. (2021)" },
+    "TRA-03": { "ko": "정보처리기사 · 리눅스마스터 2급 · SQLD · 클라우드 자격 — 학습 로드맵(취득 예정)", "en": "Engineer Information Processing · Linux Master L2 · SQLD · cloud certs — study roadmap (planned)" }
+  },
+  "resume": {
+    "_note": "0_FACTS v1.0 하류 투영 — 이력서 섹션 표시 전용 구조. 각 행 id 로 SSOT 역추적. 값 변경 금지(0_FACTS 재투영).",
+    "career": [
+      { "id": "CAR-01", "period": { "ko": "2026.01 – 현재", "en": "Jan 2026 – present" }, "org": { "ko": "㈜씨에스리 — 클라우드사업본부", "en": "CSLEE — Cloud Business Div." }, "desc": { "ko": "금융그룹 IT 환경에서 클라우드 리전 월간 사이클 수행 · SR 접수·분류·등록 전 과정 담당", "en": "Runs the monthly cycle of a financial-group cloud region · full SR intake–triage–registration" } },
+      { "id": "JIK-01", "period": { "ko": "2025.03 – 09", "en": "Mar – Sep 2025" }, "org": { "ko": "대한불교조계종 직지사 — 템플스테이", "en": "Jikjisa Templestay, Jogye Order" }, "desc": { "ko": "외국인 팀장 · 프로그램 총괄 + JiksaTS Master AI 자체 구축", "en": "Foreign-programs lead · programs + built JiksaTS Master AI" } },
+      { "id": "CET-01", "period": { "ko": "2024.05 – 25.03", "en": "May 2024 – Mar 2025" }, "org": { "ko": "세타나 CETANA — 대표", "en": "CETANA — Founder" }, "desc": { "ko": "전통공예 럭셔리 브랜드 0→1 · 경북 청년창업가 육성사업 선정", "en": "Traditional-craft luxury brand, 0→1 · provincial startup grant" } },
+      { "id": "CAR-07", "period": { "ko": "2023", "en": "2023" }, "org": { "ko": "진공인중개사사무소 — 부동산팀", "en": "Jingongin Realty — commercial team" }, "desc": { "ko": "상가·사무실 중개, 시장 동향 분석", "en": "Retail/office brokerage & market analysis" } },
+      { "id": "CAR-08", "period": { "ko": "2021 – 22", "en": "2021 – 22" }, "org": { "ko": "동국대 산학협력단 — 청년드림CEO", "en": "Dongguk IAF — Youth Dream CEO" }, "desc": { "ko": "3D프린팅 옻칠공예 창업 · 초기창업패키지 서류 통과", "en": "3D-printed ottchil-craft venture · passed the Startup Package review" } },
+      { "id": "CAR-09", "period": { "ko": "2016 – 17", "en": "2016 – 17" }, "org": { "ko": "해커스교육그룹 — 콘텐츠 제작", "en": "Hackers Education Group — content production" }, "desc": { "ko": "교육 콘텐츠 촬영·영상 제작 지원", "en": "Production support for educational video content" } }
+    ],
+    "education": [
+      { "id": "EDU-01", "period": { "ko": "2013 – 26.08", "en": "2013 – Aug 2026" }, "org": { "ko": "동국대학교(WISE) 고고미술사학과", "en": "Dongguk Univ. (WISE) — Archaeology & Art History" }, "desc": { "ko": "GPA 3.49/4.5 · 졸업예정 · 졸업논문 「자기참조와 마음의 가능성」 제출 (TRIH 제안 · Zenodo DOI)", "en": "GPA 3.49/4.5 · graduating soon · thesis Self-Reference and the Possibility of Mind (proposes TRIH · Zenodo DOI)" } },
+      { "id": "EDU-02", "period": { "ko": "2014", "en": "2014" }, "org": { "ko": "California State University, Sacramento", "en": "California State University, Sacramento" }, "desc": { "ko": "교환학생 수료", "en": "Exchange semester" } }
+    ],
+    "certs": [
+      { "id": "TRA-01", "tag": { "ko": "2024", "en": "2024" }, "text": { "ko": "ESTsoft AI 서비스 기획자 양성 과정 960시간 (Python·ML·서비스 기획)", "en": "ESTsoft AI service-planner program, 960h (Python·ML·service planning)" } },
+      { "id": "TRA-02", "tag": { "ko": "2021", "en": "2021" }, "text": { "ko": "인공지능(AI 기술활용) 중급 160시간 — 한국IT비즈니스진흥협회", "en": "AI (applied) intermediate, 160h — Korea IT Business Promotion Assoc." } },
+      { "id": "LAN-01", "tag": { "ko": "어학", "en": "Language" }, "text": { "ko": "TOEIC 775 · OPIc IM2 · 조계종 외국어 능력평가 B등급", "en": "TOEIC 775 · OPIc IM2 · Jogye Order foreign-language cert. (B)" } },
+      { "id": "CAR-10", "tag": { "ko": "병역", "en": "Military" }, "text": { "ko": "의무경찰 병장 만기 전역 (2017.11 – 2019.07)", "en": "Conscripted police, sergeant, completed service (Nov 2017 – Jul 2019)" } },
+      { "id": "TRA-03", "tag": { "ko": "예정", "en": "Planned" }, "text": { "ko": "정보처리기사 · 리눅스마스터 2급 · SQLD · 클라우드 자격 (학습 로드맵)", "en": "Engineer Information Processing · Linux Master L2 · SQLD · cloud certs (study roadmap)" } }
+    ],
+    "skills": [
+      { "label": { "ko": "AI / LLM", "en": "AI / LLM" }, "items": { "ko": "Claude · GPT · LangChain · LangGraph · RAG(GraphRAG · Agentic) · Vector DB · 파인튜닝 · MCP · 프롬프트 엔지니어링 · Claude Code", "en": "Claude · GPT · LangChain · LangGraph · RAG (GraphRAG · Agentic) · Vector DB · fine-tuning · MCP · prompt engineering · Claude Code" } },
+      { "label": { "ko": "인프라 · 운영", "en": "Infra · Ops" }, "items": { "ko": "ITSM · SLA 관리 · Docker · Kubernetes(kind) · NGINX·Tomcat · Prometheus·Grafana · Private Cloud 가상화", "en": "ITSM · SLA mgmt · Docker · Kubernetes(kind) · NGINX·Tomcat · Prometheus·Grafana · private-cloud virtualization" } },
+      { "label": { "ko": "데이터 · 문서", "en": "Data · Docs" }, "items": { "ko": "Python · Excel 고급(피벗·이상치 검증) · PowerShell · Obsidian · Git", "en": "Python · advanced Excel (pivots·outlier checks) · PowerShell · Obsidian · Git" } },
+      { "label": { "ko": "디자인 · 기획", "en": "Design · Planning" }, "items": { "ko": "Figma · Fusion360 · Lightroom · 서비스 기획(JTBD·IA) · Power BI", "en": "Figma · Fusion360 · Lightroom · service planning (JTBD·IA) · Power BI" } }
+    ]
+  }
+}

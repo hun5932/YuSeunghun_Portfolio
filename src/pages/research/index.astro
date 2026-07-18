@@ -1,0 +1,28 @@
+---
+// research/index.astro — 연구자 하이브리드 트랙 (ko).
+// 본문 조립은 ResearchTrack 컴포넌트가 담당 — en/research 와 공유.
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ResearchTrack from '../../components/tracks/ResearchTrack.astro';
+import { t } from '../../i18n/ui';
+import facts from '../../data/facts.json';
+
+const locale = 'ko' as const;
+const title = `${facts.profile.name.ko} — ${t(locale, 'track.research')}`;
+const description =
+  'TRIH(임계 재귀적 동형성 가설) 연구자 트랙. 에셔·바흐·괴델·트랜스포머 네 영역의 자기참조 구조를 하나의 3단계 형식 모델로 다룬 학사 논문과 공개 학술 기록.';
+
+// ScholarlyArticle JSON-LD — 논문 SSOT(publications/trih)에서 문구를 끌어와 날조 방지.
+const pub = await getEntry('publications', 'trih');
+const article = {
+  headline: pub!.data.title.ko,
+  datePublished: '2026-06',
+  doi: '10.5281/zenodo.21006608',
+  url: facts.profile.links.zenodo,
+  abstract: pub!.data.abstract?.ko,
+};
+---
+
+<BaseLayout locale={locale} title={title} description={description} schema="scholarly" article={article}>
+  <ResearchTrack locale={locale} />
+</BaseLayout>

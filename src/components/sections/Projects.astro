@@ -1,0 +1,935 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Projects.astro — 선별한 작업(id=works)
+//   · 필터 바(all/ai/research/brand/system) + 반응형 그리드(lg 3열 / md 2열 / 1열)
+//   · 카드: Figure 썸네일 + 카테고리 pill(+대표 뱃지) + 제목 + 한 줄 설명 + "자세히 보기"
+//   · 상세 = 프로젝트별 네이티브 <dialog> 를 빌드타임 SSR
+//       - 카드 클릭 → showModal(), ESC 기본, 배경클릭 닫기(좌표 판정),
+//         닫힐 때 트리거 포커스 복귀, body 스크롤 락
+//       - Overview · Key Contributions · Tech/Status/Year/Role 2×2 · evidence 갤러리
+//         · Links · "이 프로젝트로 상담"(#contact 앵커 + 닫기)
+//   · no-JS 폴백: <noscript> <style> 로 dialog 를 인라인 정적 노출(크롤러·무JS 안전)
+//   ── 규율: 시맨틱 토큰(--ink/--accent/--surface/--border …)만. --pf-* 직접 참조 금지.
+//            전면 한지 라이트 단일 톤(다크 섹션 없음). 한글 keep-all · reduced-motion 가드.
+// ═══════════════════════════════════════════════════════════════════════════
+import { getCollection } from 'astro:content';
+import { t, type Locale, type UiKey } from '../../i18n/ui';
+import { withBase } from '../../lib/url';
+import Figure from '../svg/Figure.astro';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.no - b.data.no);
+
+// track enum → 사전 키
+const trackKey: Record<string, UiKey> = {
+  planning: 'track.planning',
+  research: 'track.research',
+  dev: 'track.dev',
+};
+
+// ui.ts 미포함 마이크로카피 — 컴포넌트 내 pick 리터럴로 해결(ui.ts 는 다른 에이전트 소유였음).
+const pick = (ko: string, en: string) => (locale === 'ko' ? ko : en);
+// 언어중립 라벨/칩(tech·링크 라벨) 해석 — 문자열이면 그대로, {ko,en} 객체면 locale 분기.
+const lab = (v: string | { ko: string; en: string }) => (typeof v === 'string' ? v : v[locale]);
+const sectionTitle = pick('7개의 자기참조적 실험 · 구축물', 'Seven self-referential experiments & builds');
+const viewDetails = pick('자세히 보기', 'View details');
+const featuredLabel = pick('대표', 'Featured');
+const evidenceLabel = pick('참고 자료', 'References');
+
+// [pj-status-chip] 카드 스캔용 상태 축약 — 모달 status[locale] 의 스캔 라벨(신규 수치·사실 없음,
+//   기존 status 문자열의 의미를 축약). '무엇이 실제 출시/운영됐나'를 모달 없이 스캔 단계서 파악.
+const statusShort: Record<string, { ko: string; en: string }> = {
+  jiksats: { ko: '운영 종료', en: 'Retired' },
+  aiperso: { ko: '해커톤', en: 'Hackathon' },
+  trih: { ko: '제출 완료', en: 'Submitted' },
+  cetana: { ko: '휴면', en: 'Dormant' },
+  hobbybuddy: { ko: '기획 완료', en: 'Planned' },
+  'seunghun-os': { ko: '운영 중', en: 'In use' },
+  'infra-lab': { ko: '공개 실측', en: 'Public' },
+};
+
+// [pj-modal-chip-cap] 모달 tech 칩 상한 — 초과분은 '+N' 로 압축(로드베어링 스택은 상한 내 우선 노출).
+const TECH_CAP = 6;
+
+// 필터 탭 — data-filter 축(주제). 5개: all + ai/research/brand/system.
+const filters: { id: string; key: UiKey }[] = [
+  { id: 'all', key: 'projects.filterAll' },
+  { id: 'ai', key: 'projects.filterAi' },
+  { id: 'research', key: 'projects.filterResearch' },
+  { id: 'brand', key: 'projects.filterBrand' },
+  { id: 'system', key: 'projects.filterSystem' },
+];
+
+const isExternal = (href: string) => /^https?:\/\//.test(href);
+
+// 유튜브 URL → 영상 ID (youtu.be/<id> · watch?v=<id> · embed/<id>). 실패 시 null.
+const ytId = (url: string): string | null => {
+  const m = url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/)([\w-]{11})/);
+  return m ? m[1] : null;
+};
+
+const modalId = (key: string) => `pm-${key}`;
+---
+
+{/* class="work" 유지 → v2evolved.css 의 #main > .work 재배치 규칙 호환. id=works → Nav spy(#works). */}
+<section id="works" class="sec work" aria-labelledby="works-title">
+  <div class="wrap">
+    <header class="pj-head reveal">
+      <span class="k">{t(locale, 'section.work')}</span>
+      <h2 id="works-title" class="d2 pj-title">{sectionTitle}</h2>
+    </header>
+
+    {/* 필터 바 — data-filter 로 카드 show/hide. 활성 버튼 골드 밑줄. no-JS 시 전부 노출. */}
+    <div class="pj-filters reveal" style="--i:1;" role="group" aria-label={pick('프로젝트 필터', 'Project filters')}>
+      {filters.map((f) => (
+        <button
+          type="button"
+          class:list={['pj-filter', 'mono', { 'is-active': f.id === 'all' }]}
+          data-filter={f.id}
+          aria-pressed={f.id === 'all' ? 'true' : 'false'}
+        >
+          {t(locale, f.key)}
+        </button>
+      ))}
+    </div>
+
+    <div class="pj-grid">
+      {projects.map((p, i) => {
+        const d = p.data;
+        const mid = modalId(d.key);
+        return (
+          <article
+            class:list={['pj-card', 'reveal', { 'is-featured': d.featured }]}
+            data-filter={d.filter}
+            style={`--i:${i % 3}`}
+          >
+            <div class="pj-thumb" aria-hidden="true">
+              <Figure slug={d.key} class="pj-thumb-fig" />
+            </div>
+
+            <div class="pj-card-body">
+              <div class="pj-card-meta">
+                <span class="pj-pill mono">{d.cat[locale]}</span>
+                {d.featured && <span class="pj-badge mono">{featuredLabel}</span>}
+                {statusShort[d.key] && <span class="pj-status mono">{statusShort[d.key][locale]}</span>}
+                <span class="pj-year mono">{d.year}</span>
+              </div>
+
+              <h3 class="pj-card-title" id={`${mid}-card-title`}>{d.title[locale]}</h3>
+              <p class="pj-card-sub">{d.sub[locale]}</p>
+
+              {/* 카드 전체를 덮는 트리거 버튼(스트레치) — 단일 포커스 지점, 헤딩 중첩 회피. */}
+              <button
+                type="button"
+                class="pj-open"
+                data-modal={mid}
+                aria-haspopup="dialog"
+                aria-label={`${viewDetails}: ${d.title[locale]}`}
+              >
+                <span class="pj-open-label">{viewDetails}</span>
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M6 3l5 5-5 5" />
+                </svg>
+              </button>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </div>
+
+  {/* ── 프로젝트별 모달(<dialog>) — 빌드타임 SSR. 콘텐츠는 소스에 존재(크롤러 가시). ── */}
+  {projects.map((p) => {
+    const d = p.data;
+    const mid = modalId(d.key);
+    const titleId = `${mid}-title`;
+    const hasEvidence = !!(d.evidence && (d.evidence.images?.length || d.evidence.videos?.length || d.evidence.note));
+    // [pj-modal-chip-cap] 상한 내 tech 만 노출 + 초과분 '+N'. tech 배열 앞쪽에 로드베어링 스택 배치됨.
+    const techShown = d.tech.slice(0, TECH_CAP);
+    const techExtra = d.tech.length - techShown.length;
+    return (
+      <dialog class="pjm" id={mid} aria-labelledby={titleId}>
+        <div class="pjm-grid">
+          {/* 좌 비주얼 */}
+          <div class="pjm-visual" aria-hidden="true">
+            <Figure slug={d.key} class="pjm-visual-fig" />
+            <span class="pjm-visual-tag mono">{d.cat[locale]} · {d.year}</span>
+          </div>
+
+          {/* 우 본문 */}
+          <div class="pjm-body">
+            <button type="button" class="pjm-close" data-close aria-label={t(locale, 'projects.mClose')}>
+              <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="M5 5l10 10M15 5L5 15" />
+              </svg>
+            </button>
+
+            <header class="pjm-head">
+              <span class="pj-pill mono">{d.cat[locale]}</span>
+              <h3 class="pjm-title" id={titleId}>{d.title[locale]}</h3>
+              <p class="pjm-track mono">{t(locale, trackKey[d.track])}</p>
+            </header>
+
+            <section class="pjm-block">
+              <h4 class="pjm-label mono">{t(locale, 'projects.mOverview')}</h4>
+              <p class="pjm-overview">{d.desc[locale]}</p>
+            </section>
+
+            {d.bullets[locale].length > 0 && (
+              <section class="pjm-block">
+                <h4 class="pjm-label mono">{t(locale, 'projects.mContributions')}</h4>
+                <ul class="pjm-bullets">
+                  {d.bullets[locale].map((b) => (
+                    <li class="pjm-bullet">{b}</li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Tech / Status / Year / Role 2×2 */}
+            <dl class="pjm-facts">
+              <div class="pjm-fact">
+                <dt class="pjm-label mono">{t(locale, 'projects.mTech')}</dt>
+                <dd class="pjm-fact-v">
+                  <ul class="pjm-tech">
+                    {techShown.map((tch) => (
+                      <li class="pjm-tech-item mono">{lab(tch)}</li>
+                    ))}
+                    {techExtra > 0 && (
+                      <li class="pjm-tech-item pjm-tech-more mono" aria-label={pick(`기술 ${techExtra}종 더`, `${techExtra} more`)}>+{techExtra}</li>
+                    )}
+                  </ul>
+                </dd>
+              </div>
+              <div class="pjm-fact">
+                <dt class="pjm-label mono">{t(locale, 'projects.mStatus')}</dt>
+                <dd class="pjm-fact-v">{d.status[locale]}</dd>
+              </div>
+              <div class="pjm-fact">
+                <dt class="pjm-label mono">{t(locale, 'projects.mYear')}</dt>
+                <dd class="pjm-fact-v mono">{d.year}</dd>
+              </div>
+              <div class="pjm-fact">
+                <dt class="pjm-label mono">{t(locale, 'projects.mRole')}</dt>
+                <dd class="pjm-fact-v">{d.role[locale]}</dd>
+              </div>
+            </dl>
+
+            {/* 실물·증거 갤러리 */}
+            {hasEvidence && (
+              <section class="pjm-block pjm-evidence">
+                <h4 class="pjm-label mono">{evidenceLabel}</h4>
+
+                {d.evidence!.images && d.evidence!.images.length > 0 && (
+                  <div class="pjm-ev-grid">
+                    {d.evidence!.images.map((img) => (
+                      <figure class="pjm-ev-figure">
+                        <span class="pjm-ev-frame">
+                          <img src={withBase(img.src)} alt={img.alt} loading="lazy" decoding="async" />
+                        </span>
+                        <figcaption>{img.caption[locale]}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                )}
+
+                {d.evidence!.videos && d.evidence!.videos.length > 0 && (
+                  <div class="pjm-ev-videos">
+                    {d.evidence!.videos.map((v, vi) => {
+                      const id = ytId(v.url);
+                      const thumb = `/assets/projects/${d.key}/yt-${vi + 1}.webp`;
+                      return (
+                        <a class="pjm-ev-video" href={v.url} target="_blank" rel="noopener noreferrer">
+                          {id && (
+                            <span class="pjm-ev-video-thumb">
+                              <img src={withBase(thumb)} alt="" loading="lazy" decoding="async" width="480" height="270" />
+                              <span class="pjm-ev-play" aria-hidden="true">
+                                <svg viewBox="0 0 48 48" width="38" height="38" aria-hidden="true">
+                                  <circle cx="24" cy="24" r="23" fill="rgba(20,18,14,0.55)" stroke="rgba(255,255,255,0.85)" stroke-width="1.5" />
+                                  <path d="M20 17l12 7-12 7z" fill="#FFFFFF" />
+                                </svg>
+                              </span>
+                            </span>
+                          )}
+                          <span class="pjm-ev-video-title">
+                            {v.title[locale]}
+                            <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                              <path d="M6 3h7v7M13 3L4 12" />
+                            </svg>
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {d.evidence!.note && <p class="pjm-ev-note">{d.evidence!.note[locale]}</p>}
+              </section>
+            )}
+
+            {d.links.length > 0 && (
+              <section class="pjm-block">
+                <h4 class="pjm-label mono">{t(locale, 'projects.mLinks')}</h4>
+                <div class="pjm-links">
+                  {d.links.map((lnk) => (
+                    <a
+                      class="pjm-link"
+                      href={lnk.href}
+                      target={isExternal(lnk.href) ? '_blank' : undefined}
+                      rel={isExternal(lnk.href) ? 'noopener noreferrer' : undefined}
+                    >
+                      {lab(lnk.label)}
+                      <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path d="M6 3h7v7M13 3L4 12" />
+                      </svg>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* 이 프로젝트로 상담 — #contact 앵커 + 닫기(JS). no-JS 시 앵커만으로도 동작. */}
+            <a class="pjm-consult" href="#contact" data-consult>
+              {t(locale, 'projects.mConsult')}
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="M3 8h9M8 4l4 4-4 4" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </dialog>
+    );
+  })}
+</section>
+
+{/* no-JS 폴백 — dialog 를 인라인 정적 패널로 노출(무JS·크롤러 안전). */}
+<noscript>
+  <style is:inline>
+    .pjm {
+      display: block;
+      position: static;
+      inset: auto;
+      width: auto;
+      max-width: 100%;
+      max-height: none;
+      margin: 16px 0 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      /* [pj-modal-close-anim] 정적 패널은 [open] 이 없어 애니메이션 base(opacity:0/transform)에
+         가려질 수 있으므로 무JS 폴백에서 강제 복원 — 열림·닫힘 연출은 JS 모달 경로 전용. */
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .pjm-close { display: none !important; }
+    .pj-open::after { display: none !important; }
+  </style>
+</noscript>
+
+<style>
+  /* ── 헤더 ── */
+  .pj-head { margin-bottom: clamp(22px, 3vw, 34px); }
+  .pj-title { margin-top: 14px; max-width: 22ch; }
+
+  /* ── 필터 바 ── */
+  .pj-filters {
+    display: flex;
+    flex-wrap: wrap;
+    /* [pj-filter-tap] row-gap 상향(6→10) — 모바일 2행 밀착 해소, 편안한 탭 간격. */
+    gap: 10px 18px;
+    padding-bottom: 16px;
+    margin-bottom: clamp(24px, 3vw, 36px);
+    border-bottom: 1px solid var(--border);
+  }
+  .pj-filter {
+    position: relative;
+    background: none;
+    border: 0;
+    /* [pj-filter-tap] 좌우 패딩 추가 + 세로 패딩 상향(8·2→10·8) — 좁은 칩 탭타깃 확대. */
+    padding: 10px 8px;
+    cursor: pointer;
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    transition: color var(--dur) var(--ease);
+  }
+  .pj-filter::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: 2px;
+    height: 2px; width: 0;
+    background: var(--accent);
+    transition: width var(--dur) var(--ease);
+  }
+  .pj-filter:hover { color: var(--ink); }
+  .pj-filter.is-active { color: var(--accent-text, var(--accent)); }
+  .pj-filter.is-active::after { width: 100%; }
+  .pj-filter:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  /* ── 그리드: lg 3열 / md 2열 / 모바일 1열 ── */
+  .pj-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(16px, 2vw, 24px);
+  }
+  @media (max-width: 1000px) { .pj-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px)  { .pj-grid { grid-template-columns: 1fr; } }
+
+  /* 필터 숨김 — grid flow 제거 */
+  .pj-card[hidden] { display: none; }
+
+  /* ── 카드 ── */
+  .pj-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease),
+                box-shadow var(--dur) var(--ease);
+  }
+  .pj-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px -18px rgba(27, 25, 23, 0.35);
+  }
+  .pj-card:focus-within { border-color: var(--accent); }
+  /* featured — 옻칠골드 상단 스트립 */
+  .pj-card.is-featured::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: var(--accent);
+    z-index: 2;
+  }
+
+  /* R3: 배너 비율을 Figure SVG viewBox(400×300 = 4:3)와 일치 → preserveAspectRatio
+     "slice"의 상·하 크롭 제거. 하단 라벨(JiksaTS·마음들이 등 7종) 전부 완전 노출. */
+  .pj-thumb {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border-soft);
+    background: var(--surface-2);
+  }
+  .pj-thumb-fig { width: 100%; height: 100%; }
+  .pj-thumb :global(.pf-fig) { width: 100%; height: 100%; }
+
+  .pj-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: clamp(16px, 2vw, 22px);
+    flex: 1;
+  }
+  .pj-card-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .pj-pill {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+    background: var(--accent-tint);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .pj-badge {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--on-accent);
+    background: var(--accent);
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  /* [pj-status-chip] 상태 칩 — 카테고리 pill/대표 뱃지와 구분되는 절제된 아웃라인 칩.
+     스캔 단계에서 출시/운영 상태 파악(모달 열지 않고). 톤은 종속(ink-3 + 소프트 보더). */
+  .pj-status {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    border: 1px solid var(--border);
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pj-year { margin-left: auto; font-size: var(--fz-xxs); color: var(--ink-3); letter-spacing: 0.04em; }
+
+  .pj-card-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-xl);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  .pj-card-sub {
+    font-size: var(--fz-sm);
+    line-height: 1.6;
+    color: var(--ink-3);
+    word-break: keep-all;
+  }
+
+  /* 스트레치 트리거 — 카드 전체를 덮는 단일 포커스 버튼 */
+  .pj-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 6px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font: 500 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.06em;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease), gap var(--dur) var(--ease);
+  }
+  .pj-open::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .pj-card:hover .pj-open { color: var(--accent); gap: 10px; }
+  /* [pj-focus-ring] 키보드 포커스 링(WCAG 2.4.7) — 스트레치 트리거 ::after(카드 전체를 덮음)에
+     inset box-shadow 링을 그려 카드 overflow:hidden 에 잘리지 않게 한다. hover 리프트(transform)와
+     별개 속성이라 시각 충돌 없음. 한지 위 대비 약한 focus-within 골드 보더를 보강. */
+  .pj-open:focus-visible { outline: none; }
+  .pj-open:focus-visible::after {
+    box-shadow: inset 0 0 0 2px var(--accent);
+    border-radius: 14px;
+  }
+  .pj-card:focus-within .pj-open-label { text-decoration: underline; text-underline-offset: 3px; }
+  .pj-open svg { transition: transform var(--dur) var(--ease); }
+  .pj-card:hover .pj-open svg { transform: translateX(2px); }
+
+  /* ═══════════ 모달(<dialog>) ═══════════ */
+  /* R1: 네이티브 dialog 센터링 명시 복원. 전역 리셋(* { margin:0 })이 UA 의
+     margin:auto 를 덮어 좌상단으로 쏠리던 것을 position:fixed + inset:0 + margin:auto
+     로 뷰포트 정중앙(가로·세로) 고정. position:fixed 는 동시에 .pjm 을 절대배치
+     컨테이닝 블록으로 확정 → .pjm-close 가 스크롤과 무관하게 모달 우상단에 고정된다. */
+  .pjm {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    width: min(1080px, 92vw);
+    max-width: min(1080px, 92vw);
+    max-height: 88vh;   /* R2: 모달 전체 높이 상한 */
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface);
+    color: var(--ink);
+    overflow: hidden;
+    box-shadow: 0 30px 80px -30px rgba(20, 18, 14, 0.55);
+  }
+  /* R1: 반투명 먹색 + 소량 blur */
+  .pjm::backdrop {
+    background: rgba(20, 18, 14, 0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+
+  .pjm-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    /* 행 트랙을 minmax(0,1fr) 로 묶어야 max-height 제약이 그리드 아이템까지 전달되어
+       .pjm-body 내부 스크롤이 작동한다 (auto 트랙이면 본문이 88vh 를 넘겨 자라 하단이 잘림) */
+    grid-template-rows: minmax(0, 1fr);
+    max-height: 88vh;
+  }
+  @media (max-width: 720px) {
+    /* 단일 컬럼 — 스크롤 컨테이너가 .pjm-grid 로 이동. .pjm-close 는 .pjm(fixed)에
+       고정되어 여전히 우상단 접근 가능. 스크롤바 얇게 정돈. */
+    .pjm-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .pjm-grid::-webkit-scrollbar { width: 8px; }
+    .pjm-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  }
+  /* R2: 모바일(≤560px) 풀스크린에 가깝게 — 여백 없이 뷰포트 가득, 모서리 각짐 */
+  @media (max-width: 560px) {
+    .pjm {
+      width: 100vw;
+      max-width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
+      border: 0;
+      border-radius: 0;
+    }
+    .pjm-grid { max-height: 100vh; }
+  }
+
+  /* 좌 비주얼 — 풀블리드 cover: 도판이 패널을 꽉 채운다(잘림 허용). 패딩·flex 정렬 없이
+     SVG 를 패널 크기에 맞춰 늘리고, preserveAspectRatio slice(cover) 로 상·하 크롭을 허용한다.
+     배경 그라디언트는 남겨두되 SVG 에 완전히 가려져 무해하다. */
+  .pjm-visual {
+    position: relative;
+    min-height: 220px;
+    background:
+      radial-gradient(120% 78% at 50% 24%, var(--accent-tint) 0%, transparent 64%),
+      var(--surface-2);
+    border-right: 1px solid var(--border-soft);
+    overflow: hidden;
+  }
+  /* Figure SVG 는 preserveAspectRatio="…slice"(cover). 렌더 박스를 패널 전체(100%×100%)로
+     늘리면 slice 가 패널을 꽉 채우며 넘치는 부분을 크롭한다 → 풀블리드 cover. */
+  .pjm-visual-fig,
+  .pjm-visual :global(.pf-fig) {
+    width: 100%;
+    height: 100%;
+  }
+  .pjm-visual-tag {
+    position: absolute;
+    left: 14px; bottom: 14px;
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.06em;
+    color: var(--ink-2);
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  @media (max-width: 720px) {
+    /* 상단 배너로 접힘 — 풀블리드 cover 유지(패딩·max-width 없음, 배너 높이는 min-height 로 제어). */
+    .pjm-visual {
+      min-height: 160px;
+      border-right: 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+  }
+
+  /* 우 본문 — R2: 내부 스크롤 영역. position:relative 를 두지 않아(컨테이닝 블록 회피)
+     .pjm-close 는 상위 .pjm(fixed)에 고정되어 스크롤과 무관하게 항상 우상단 접근 가능.
+     스크롤바는 얇게 정돈(Firefox thin + WebKit 8px). */
+  .pjm-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: clamp(22px, 3vw, 34px);
+    min-height: 0; /* grid 아이템 암시적 min-height:auto 무력화 — 스크롤 조건 */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .pjm-body::-webkit-scrollbar { width: 8px; }
+  .pjm-body::-webkit-scrollbar-track { background: transparent; }
+  .pjm-body::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+  }
+  @media (max-width: 720px) { .pjm-body { overflow-y: visible; } }
+
+  .pjm-close {
+    position: absolute;
+    top: 14px; right: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px; height: 34px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--ink-2);
+    cursor: pointer;
+    z-index: 3;
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .pjm-close:hover { color: var(--accent); border-color: var(--accent); }
+  .pjm-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .pjm-head { display: flex; flex-direction: column; gap: 8px; padding-right: 44px; }
+  .pjm-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-h2);
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  .pjm-track {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-text, var(--accent));
+  }
+
+  .pjm-block { display: flex; flex-direction: column; gap: 10px; }
+  .pjm-label {
+    font-size: var(--fz-xxs);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .pjm-overview {
+    font-size: var(--fz-sm);
+    line-height: 1.72;
+    color: var(--ink-2);
+    word-break: keep-all;
+  }
+
+  .pjm-bullets { display: flex; flex-direction: column; gap: 9px; }
+  .pjm-bullet {
+    position: relative;
+    padding-left: 18px;
+    font-size: var(--fz-sm);
+    line-height: 1.62;
+    color: var(--ink-2);
+    word-break: keep-all;
+  }
+  .pjm-bullet::before { content: '▹'; position: absolute; left: 0; color: var(--accent); }
+
+  /* 2×2 팩트 */
+  .pjm-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+    padding: 16px 0;
+    border-block: 1px solid var(--border-soft);
+    margin: 0;
+  }
+  @media (max-width: 460px) { .pjm-facts { grid-template-columns: 1fr; } }
+  .pjm-fact { display: flex; flex-direction: column; gap: 7px; }
+  .pjm-fact-v { font-size: var(--fz-xs); line-height: 1.5; color: var(--ink); word-break: keep-all; margin: 0; }
+  .pjm-tech { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pjm-tech-item {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+    padding: 3px 9px;
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+  }
+  /* [pj-modal-chip-cap] 초과 tech 압축 칩(+N) — 아웃라인은 동일, 악센트로 '더 있음'만 신호. */
+  .pjm-tech-more {
+    color: var(--accent-text, var(--accent));
+    border-color: var(--accent);
+  }
+
+  /* evidence 갤러리 */
+  .pjm-ev-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .pjm-ev-figure { display: flex; flex-direction: column; gap: 7px; margin: 0; }
+  .pjm-ev-frame {
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    background: var(--surface-2);
+  }
+  .pjm-ev-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  /* [pj-evidence-hover] 절제 듀오톤 — 평시 약강도 탈채도, hover/focus 시 원색 복귀.
+     hover 가능·포인터 정밀 기기 한정(터치는 항상 원색). '참고 자료' 정직성: 강도 낮게(.25/.92). */
+  @media (hover: hover) and (pointer: fine) {
+    .pjm-ev-frame img {
+      filter: grayscale(0.25) saturate(0.92);
+      transition: filter var(--dur) var(--ease);
+    }
+    .pjm-ev-figure:hover .pjm-ev-frame img,
+    .pjm-ev-figure:focus-within .pjm-ev-frame img { filter: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pjm-ev-frame img { transition: none; }
+  }
+  .pjm-ev-figure figcaption { font-size: var(--fz-xxs); line-height: 1.5; color: var(--ink-3); }
+
+  .pjm-ev-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .pjm-ev-video { display: flex; flex-direction: column; gap: 8px; text-decoration: none; }
+  .pjm-ev-video-thumb {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    background: var(--surface-2);
+  }
+  .pjm-ev-video-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--dur) var(--ease); }
+  .pjm-ev-video:hover .pjm-ev-video-thumb img { transform: scale(1.03); }
+  .pjm-ev-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .pjm-ev-video-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 500 var(--fz-xs) / 1.3 var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease);
+    word-break: keep-all;
+  }
+  .pjm-ev-video:hover .pjm-ev-video-title { color: var(--accent); }
+  .pjm-ev-video:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 10px; }
+  .pjm-ev-note { font-size: var(--fz-xs); line-height: 1.6; color: var(--ink-3); font-style: italic; }
+
+  /* 링크 */
+  .pjm-links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+  .pjm-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 500 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+    position: relative;
+    transition: color var(--dur) var(--ease);
+  }
+  .pjm-link::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: -3px;
+    height: 1px; width: 0;
+    background: var(--accent);
+    transition: width 0.3s var(--ease);
+  }
+  .pjm-link:hover { color: var(--accent); }
+  .pjm-link:hover::after { width: calc(100% - 17px); }
+  .pjm-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  /* 상담 CTA */
+  .pjm-consult {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 13px 18px;
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: 10px;
+    text-decoration: none;
+    font: 600 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+  .pjm-consult:hover { background: var(--accent-2); transform: translateY(-1px); }
+  .pjm-consult:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* [pj-modal-close-anim] 모달 열림·닫힘 대칭 연출 — reduced-motion 가드.
+     transition-behavior:allow-discrete + @starting-style 로 지원 브라우저는 열림·닫힘 모두
+     페이드/축소(≤0.2s). 미지원 브라우저는 값이 무시되어 현행 즉시 열림·닫힘으로 폴백.
+     풀블리드 cover·본문 내부 스크롤·'참고 자료' 라벨 등 구조는 불변(연출만 대칭화). */
+  @media (prefers-reduced-motion: no-preference) {
+    .pjm {
+      opacity: 0;
+      transform: translateY(12px) scale(0.985);
+      transition:
+        opacity 0.2s var(--ease),
+        transform 0.2s var(--ease-expo),
+        overlay 0.2s var(--ease) allow-discrete,
+        display 0.2s var(--ease) allow-discrete;
+    }
+    .pjm[open] { opacity: 1; transform: none; }
+    @starting-style {
+      .pjm[open] { opacity: 0; transform: translateY(12px) scale(0.985); }
+    }
+    .pjm::backdrop {
+      opacity: 0;
+      transition:
+        opacity 0.2s ease,
+        overlay 0.2s ease allow-discrete,
+        display 0.2s ease allow-discrete;
+    }
+    .pjm[open]::backdrop { opacity: 1; }
+    @starting-style {
+      .pjm[open]::backdrop { opacity: 0; }
+    }
+  }
+
+  /* 인쇄: 카드만(모달은 닫힘). */
+  @media print {
+    .pjm { display: none !important; }
+    .pj-filters { display: none; }
+  }
+</style>
+
+<script>
+  // ── 필터 + 모달 컨트롤러 (모듈 스코프, 1회 실행) ──
+  const section = document.getElementById('works');
+  if (section) {
+    // (1) 필터
+    const filterBtns = Array.from(section.querySelectorAll<HTMLButtonElement>('.pj-filter'));
+    const cards = Array.from(section.querySelectorAll<HTMLElement>('.pj-card'));
+    const applyFilter = (id: string) => {
+      for (const card of cards) {
+        const show = id === 'all' || card.dataset.filter === id;
+        card.toggleAttribute('hidden', !show);
+      }
+      for (const btn of filterBtns) {
+        const active = btn.dataset.filter === id;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      }
+    };
+    for (const btn of filterBtns) {
+      btn.addEventListener('click', () => applyFilter(btn.dataset.filter || 'all'));
+    }
+
+    // (2) 모달
+    let lastTrigger: HTMLElement | null = null;
+
+    const lockScroll = () => { document.body.style.overflow = 'hidden'; };
+    const unlockScroll = () => { document.body.style.overflow = ''; };
+
+    const openModal = (id: string, trigger: HTMLElement) => {
+      const dlg = document.getElementById(id) as HTMLDialogElement | null;
+      if (!dlg || typeof dlg.showModal !== 'function') return;
+      lastTrigger = trigger;
+      dlg.showModal();
+      lockScroll();
+    };
+
+    // 카드 트리거
+    for (const openBtn of section.querySelectorAll<HTMLButtonElement>('.pj-open')) {
+      openBtn.addEventListener('click', () => {
+        const id = openBtn.dataset.modal;
+        if (id) openModal(id, openBtn);
+      });
+    }
+
+    // 각 dialog: 닫기 버튼 · 배경클릭(좌표) · 상담CTA · close 이벤트(포커스복귀/스크롤해제)
+    for (const dlg of section.querySelectorAll<HTMLDialogElement>('.pjm')) {
+      // 닫기 버튼
+      for (const closeBtn of dlg.querySelectorAll<HTMLButtonElement>('[data-close]')) {
+        closeBtn.addEventListener('click', () => dlg.close());
+      }
+      // 배경클릭 — 다이얼로그 박스 rect 밖 좌표면 닫기
+      dlg.addEventListener('click', (e) => {
+        if (e.target !== dlg) return; // 내부 요소 클릭은 무시
+        const r = dlg.getBoundingClientRect();
+        const outside =
+          e.clientX < r.left || e.clientX > r.right ||
+          e.clientY < r.top || e.clientY > r.bottom;
+        if (outside) dlg.close();
+      });
+      // 상담 CTA — 닫고 #contact 로 이동(앵커 기본 동작 유지)
+      const consult = dlg.querySelector<HTMLAnchorElement>('[data-consult]');
+      if (consult) consult.addEventListener('click', () => dlg.close());
+      // 닫힘 정리
+      dlg.addEventListener('close', () => {
+        unlockScroll();
+        if (lastTrigger) { lastTrigger.focus(); lastTrigger = null; }
+      });
+    }
+  }
+</script>

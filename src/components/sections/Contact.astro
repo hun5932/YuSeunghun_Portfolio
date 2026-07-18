@@ -1,0 +1,409 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Contact.astro — 연락(id=contact) · v1 레이아웃 재작성
+//   [좌] 이름·타이틀 소개 + EMAIL(학술 주소) · BASED IN · LINKS + "Now Open For" 태그
+//   [우] <ContactForm locale> 그대로 (ContactForm.astro 수정 금지·재사용)
+//   · 전면 한지 라이트 단일 톤 · 시맨틱 토큰만 사용 · 전화번호·프로필 사진 없음
+// ═══════════════════════════════════════════════════════════════════════════
+import facts from '../../data/facts.json';
+import { t, type Locale } from '../../i18n/ui';
+import ContactForm from '../islands/ContactForm.astro';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const ko = locale === 'ko';
+const pick = (k: string, e: string) => (ko ? k : e);
+
+// 노출 이메일 = 학술 수신 주소(email_academic) — 현행 email_career 노출 교체
+const email = facts.profile.email_academic;
+const name = facts.profile.name[locale];
+const L = facts.profile.links;
+
+// 소개 한 줄(타이틀) · 위치 값 — '·' 나열은 항목별 세그먼트로 분해(.seg 로 항목 단위만 개행)
+const roleItems = ko
+  ? ['AI 서비스 기획자', '클라우드 운영', '연구자']
+  : ['AI Service Planner', 'Cloud Ops', 'Researcher'];
+
+// 좌측 소개문 — 앞부분은 '·' 나열 항목, 뒤는 온전한 한 문장(꼬리)
+const leadItems = ko
+  ? ['AI 서비스 기획', 'LLM 응용', '금융 클라우드 인프라 운영', '메커니스틱 해석 연구']
+  : ['AI service planning', 'LLM applications', 'financial-cloud infra ops', 'mechanistic-interpretability research'];
+const leadTail = pick(
+  '— 실무와 연구를 모두 진지하게 다루는 작업이라면 기꺼이 답하겠습니다.',
+  '— I gladly reply to work that takes both practice and research seriously.'
+);
+
+// 위치 — facts.json SSOT(profile.location) 직접 소비 → 드리프트 방지 ('서울 · 원격 가능')
+const basedItems = facts.profile.location[locale].split(' · ');
+
+// 외부 링크 큐레이션 — 라벨은 고정 표기(고유명)
+const links = [
+  { label: 'GitHub', href: L.github },
+  { label: 'infra-lab', href: L.infraLab },
+  { label: pick('논문 DOI', 'Paper DOI'), href: L.zenodo },
+  { label: 'YouTube', href: L.videoJikjisa1 },
+];
+
+// "Now Open For" 태그 — 고용형(open1-3)과 학술·연구형(open4-5)을 소제목으로 분리.
+//   → 'AI 대학원 진학'(open5)이 정규직 태그와 나란히 flight-risk 로 읽히지 않게,
+//     연구 트랙 문맥('학술 · 연구 협업')으로 묶는다. 태그는 하나도 삭제하지 않음.
+const openGroups = [
+  {
+    title: pick('고용', 'Employment'),
+    tags: [
+      { key: 'contact.open1' as const, alt: false },
+      { key: 'contact.open2' as const, alt: false },
+      { key: 'contact.open3' as const, alt: false },
+    ],
+  },
+  {
+    title: pick('학술 · 연구 협업', 'Academic · research'),
+    tags: [
+      { key: 'contact.open4' as const, alt: true },
+      { key: 'contact.open5' as const, alt: true },
+    ],
+  },
+];
+
+// 제목 — 제목 키(section.contact)는 c 소유(교체 중). 마크업은 em 강조를 지원하도록 정돈:
+//   ko 문안에 '함께 그려가요' 어절이 있으면 <em> 강조, 없으면 원문 그대로(무해한 no-op).
+//   문안은 우리 i18n 소유 문자열이라 set:html 안전.
+const rawTitle = t(locale, 'section.contact');
+const titleHtml =
+  ko && rawTitle.includes('함께 그려가요')
+    ? rawTitle.replace('함께 그려가요', '<em>함께 그려가요</em>')
+    : rawTitle;
+---
+
+<section id="contact" class="sec contact" aria-labelledby="contact-title">
+  <div class="wrap contact-in">
+    <!-- 좌: 소개 + 연락 정보 + Now Open For -->
+    <div class="contact-lead reveal">
+      <span class="k">{t(locale, 'nav.contact')}</span>
+      <h2 id="contact-title" class="d2 contact-title" set:html={titleHtml}></h2>
+
+      <p class="contact-desc">
+        {leadItems.map((it, i) => (
+          <>
+            <span class="seg">{it}{i < leadItems.length - 1 ? ' ·' : ''}</span>{' '}
+          </>
+        ))}
+        {leadTail}
+      </p>
+
+      <div class="contact-id">
+        <p class="contact-name">{name}</p>
+        <p class="contact-role mono">
+          {roleItems.map((it, i) => (
+            <>
+              <span class="seg">{it}{i < roleItems.length - 1 ? ' ·' : ''}</span>{' '}
+            </>
+          ))}
+        </p>
+      </div>
+
+      <dl class="contact-info">
+        <div class="info-row">
+          <dt class="mono">{t(locale, 'contact.labelEmail')}</dt>
+          <dd>
+            <div class="info-mail-wrap">
+              <a class="info-mail" href={`mailto:${email}`}>
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                  <rect x="1.5" y="3" width="13" height="10" rx="1.5" />
+                  <path d="M2 4l6 4.5L14 4" />
+                </svg>
+                <span class="info-mail-addr">{email}</span>
+              </a>
+              <button
+                type="button"
+                class="mail-copy"
+                data-copy={email}
+                data-done={pick('복사됨', 'Copied')}
+                aria-label={pick('이메일 주소 복사', 'Copy email address')}
+              >
+                <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" />
+                  <path d="M3.5 10.5H3A1.5 1.5 0 0 1 1.5 9V3A1.5 1.5 0 0 1 3 1.5h6A1.5 1.5 0 0 1 10.5 3v.5" />
+                </svg>
+                <span class="mail-copy-tx">{pick('복사', 'Copy')}</span>
+              </button>
+            </div>
+            <p class="info-mail-hint">
+              {pick('폼이 안 열리면 이 주소로 바로 메일 주세요.', 'If the form does not open, email this address directly.')}
+            </p>
+          </dd>
+        </div>
+
+        <div class="info-row">
+          <dt class="mono">{t(locale, 'contact.labelBasedIn')}</dt>
+          <dd>
+            {basedItems.map((it, i) => (
+              <>
+                <span class="seg">{it}{i < basedItems.length - 1 ? ' ·' : ''}</span>{' '}
+              </>
+            ))}
+          </dd>
+        </div>
+
+        <div class="info-row">
+          <dt class="mono">{t(locale, 'contact.labelLinks')}</dt>
+          <dd class="info-links">
+            {links.map((lnk) => (
+              <a class="info-link mono" href={lnk.href} target="_blank" rel="noopener noreferrer">
+                {lnk.label}
+                <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M6 3h7v7M13 3L4 12" />
+                </svg>
+              </a>
+            ))}
+          </dd>
+        </div>
+      </dl>
+
+      <div class="contact-open">
+        <p class="open-label mono">{t(locale, 'contact.openFor')}</p>
+        {openGroups.map((grp) => (
+          <div class="open-group">
+            <p class="open-sub mono">{grp.title}</p>
+            <ul class="open-tags">
+              {grp.tags.map((tg) => (
+                <li class:list={['open-tag', { 'open-tag--alt': tg.alt }]}>{t(locale, tg.key)}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- 우: 폼 -->
+    <div class="contact-form-col reveal" style="--i:1;">
+      <ContactForm locale={locale} />
+    </div>
+  </div>
+</section>
+
+<script>
+  // ── 이메일 복사 버튼 (메일 클라이언트 미설정 사내 PC 폴백 — mailto 무반응 대비) ──
+  //   클립보드 API 우선, 실패 시 execCommand 폴백. 폼 로직과 무관(래퍼 전용).
+  document.querySelectorAll<HTMLButtonElement>('.mail-copy').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const addr = btn.dataset.copy ?? '';
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(addr);
+        ok = true;
+      } catch {
+        // 구형·비보안 컨텍스트 폴백
+        const ta = document.createElement('textarea');
+        ta.value = addr;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { ok = document.execCommand('copy'); } catch { ok = false; }
+        ta.remove();
+      }
+      if (!ok) return;
+      const label = btn.querySelector<HTMLElement>('.mail-copy-tx');
+      if (!label || btn.classList.contains('is-copied')) return;
+      const prev = label.textContent;
+      label.textContent = btn.dataset.done ?? 'Copied';
+      btn.classList.add('is-copied');
+      window.setTimeout(() => {
+        label.textContent = prev;
+        btn.classList.remove('is-copied');
+      }, 1600);
+    });
+  });
+</script>
+
+<style>
+  .contact-in {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(36px, 6vw, 80px);
+    align-items: start;
+  }
+
+  .contact-title { margin-top: 14px; max-width: 18ch; }
+
+  .contact-desc {
+    margin-top: 22px;
+    max-width: 42ch;
+    font-size: var(--fz-sm);
+    line-height: 1.7;
+    color: var(--ink-2);
+    word-break: keep-all;
+  }
+
+  /* ── 이름·타이틀 소개 ── */
+  .contact-id {
+    margin-top: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .contact-name {
+    font-size: var(--fz-md);
+    font-weight: 500;
+    color: var(--ink);
+    word-break: keep-all;
+  }
+  .contact-role {
+    margin-top: 6px;
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-text, var(--accent));
+  }
+
+  /* ── 연락 정보(정의 목록) ── */
+  .contact-info {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .info-row {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+  .info-row dt {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-top: 3px;
+  }
+  .info-row dd {
+    font-size: var(--fz-sm);
+    color: var(--ink-2);
+    word-break: keep-all;
+  }
+
+  .info-mail {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--ink);
+    position: relative;
+    transition: color var(--dur) var(--ease);
+  }
+  .info-mail::after {
+    content: '';
+    position: absolute;
+    left: 23px; bottom: -3px;
+    height: 1px; width: 0;
+    background: var(--accent);
+    transition: width 0.3s var(--ease);
+  }
+  .info-mail:hover { color: var(--accent); }
+  .info-mail:hover::after { width: calc(100% - 23px); }
+
+  /* 이메일 승격 — 굵은 주소 + 복사 버튼 + 상시 폴백 안내 */
+  .info-mail-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .info-mail-addr { font-weight: 600; }
+  .mail-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font: 500 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+                background var(--dur) var(--ease);
+  }
+  .mail-copy:hover { color: var(--accent-text, var(--accent)); border-color: var(--accent); }
+  .mail-copy:focus-visible { outline: 2px dashed var(--accent); outline-offset: 2px; }
+  .mail-copy.is-copied {
+    color: var(--accent-text, var(--accent));
+    border-color: var(--accent);
+    background: var(--accent-tint);
+  }
+  .info-mail-hint {
+    margin-top: 8px;
+    font-size: var(--fz-xs);
+    line-height: 1.5;
+    color: var(--ink-3);
+    word-break: keep-all;
+  }
+
+  .info-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+  }
+  .info-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--fz-xs);
+    letter-spacing: 0.03em;
+    color: var(--ink-3);
+    transition: color var(--dur) var(--ease);
+  }
+  .info-link:hover { color: var(--accent); }
+  .info-link:focus-visible { outline: 2px dashed var(--accent); outline-offset: 3px; }
+
+  /* ── Now Open For ── */
+  .contact-open {
+    margin-top: 30px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .open-label {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 12px;
+  }
+  .open-group + .open-group { margin-top: 16px; }
+  .open-sub {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+  .open-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .open-tag {
+    font-size: var(--fz-xs);
+    letter-spacing: 0.02em;
+    padding: 6px 12px;
+    border-radius: 999px;
+    color: var(--accent-text, var(--accent));
+    background: var(--accent-tint);
+    border: 1px solid var(--border);
+    word-break: keep-all;
+  }
+  .open-tag--alt {
+    color: var(--ink-2);
+    background: var(--surface);
+  }
+
+  @media (max-width: 780px) {
+    .contact-in { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 420px) {
+    .info-row { grid-template-columns: 1fr; gap: 5px; }
+    .info-row dt { padding-top: 0; }
+  }
+</style>

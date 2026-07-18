@@ -1,0 +1,336 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// DevTrack.astro — 개발 · 인프라 트랙 본문 (locale 파라미터화)
+//   인트로 → Labs(infra-lab 3랩) → 프로젝트 카드(dev 트랙) → 기술 스택 → 메인 복귀.
+//   · dev/index.astro(ko) · en/dev/index.astro(en) 가 공유.
+//   수치는 facts.json만 · 내부 링크는 localeHref 경유.
+// ═══════════════════════════════════════════════════════════════════════════
+import Labs from '../sections/Labs.astro';
+import FigInfraChart from '../svg/FigInfraChart.astro';
+import { getCollection } from 'astro:content';
+import { localeHref } from '../../lib/url';
+import { t, type Locale } from '../../i18n/ui';
+import facts from '../../data/facts.json';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const ko = locale === 'ko';
+// 언어중립 라벨/칩(tech·링크 라벨) 해석 — 문자열이면 그대로, {ko,en} 객체면 locale 분기.
+const lab = (v: string | { ko: string; en: string }) => (typeof v === 'string' ? v : v[locale]);
+
+// dev 트랙 프로젝트 — seunghun-os · infra-lab (no 오름차순).
+const projects = (await getCollection('projects'))
+  .filter((p) => p.data.track === 'dev')
+  .sort((a, b) => a.data.no - b.data.no);
+
+// 기술 스택 그룹 — 이력서 v6 스킬 구조 요약(정성 키워드, 수치 없음).
+const stack = [
+  {
+    k: 'STACK 01',
+    group: { ko: 'AI / LLM', en: 'AI / LLM' },
+    items: {
+      ko: ['LangChain', 'RAG · 프롬프트 설계', 'Claude Code · MCP', 'LLM 해석가능성', 'AI 서비스 기획'],
+      en: ['LangChain', 'RAG · prompt design', 'Claude Code · MCP', 'LLM interpretability', 'AI product planning'],
+    },
+  },
+  {
+    k: 'STACK 02',
+    group: { ko: 'Python · 데이터', en: 'Python · data' },
+    items: {
+      ko: ['데이터 처리', 'SLA 툴킷(가동률↔다운타임)', 'music21', 'transformers · circuitsvis', '테스트 자동화'],
+      en: ['Data processing', 'SLA toolkit (availability ↔ downtime)', 'music21', 'transformers · circuitsvis', 'Test automation'],
+    },
+  },
+  {
+    k: 'STACK 03',
+    group: { ko: 'IT 서비스 · 인프라', en: 'IT service · infra' },
+    items: {
+      ko: ['ITSM · ITIL 변경관리', 'Docker Compose · NGINX', 'Kubernetes(kind)', 'Prometheus · Grafana', '금융 클라우드 MSP 운영'],
+      en: ['ITSM · ITIL change mgmt', 'Docker Compose · NGINX', 'Kubernetes (kind)', 'Prometheus · Grafana', 'Financial-cloud MSP ops'],
+    },
+  },
+  {
+    k: 'STACK 04',
+    group: { ko: '지식관리 · 시스템', en: 'Knowledge mgmt · systems' },
+    items: {
+      ko: ['Obsidian · Dataview', '온톨로지 · PARA 설계', '팔란티어 4계층 메타모델', '워크플로우 자동화'],
+      en: ['Obsidian · Dataview', 'Ontology · PARA design', 'Palantir 4-layer metamodel', 'Workflow automation'],
+    },
+  },
+];
+
+// INF-01 실측(1.2s → 0s) — 배포 순단 재현 차트 캡션 정합.
+const inf01 = facts.measured.find((m) => m.factId === 'INF-01')!;
+
+// 인라인 마이크로카피
+const C = {
+  headHtml: ko ? '재현하고 <em>실측</em>하는 인프라' : 'Infrastructure, <em>reproduced &amp; measured</em>',
+  gloss: '',
+  projK: t(locale, 'nav.work'),
+  projTitle: ko ? '개발 · 인프라 프로젝트' : 'Dev & infra projects',
+  stackK: ko ? '기술 스택' : 'Tech stack',
+  stackTitle: ko ? '네 갈래의 도구' : 'Four families of tools',
+  back: ko ? '메인으로 돌아가기' : 'Back to main',
+  chartSec: ko ? '순단 실측' : 'Downtime, measured',
+  chartCap: ko
+    ? '단일 인스턴스 패치는 재시작 동안 1.2초 순단이 발생하지만, k8s 롤링 업데이트(maxUnavailable: 0)는 0초 무중단. 스크린샷이 아니라 실측 데이터 기반 재현 도판입니다.'
+    : 'A single-instance patch drops 1.2s during restart; a k8s rolling update (maxUnavailable: 0) stays at 0s. This is not a screenshot but a figure reconstructed from measured data.',
+};
+---
+
+{/* ── 인트로 ── */}
+<section class="sec" id="dev">
+  <div class="wrap">
+    <span class="k reveal">{t(locale, 'track.dev')}</span>
+    <h1 class="d1 reveal" style="margin-top:1rem;max-width:18ch;">
+      <Fragment set:html={C.headHtml} />
+      {C.gloss && <span class="gloss" style="display:block;margin-top:14px;font-size:var(--fz-lg);">{C.gloss}</span>}
+    </h1>
+    {ko ? (
+      <p class="reveal" style="margin-top:1.5rem;max-width:64ch;color:var(--ink-2);font-size:var(--fz-lg);line-height:1.85;">
+        금융 클라우드 현직에서 SR로 접한 구성을 직접 재현해 순단을
+        <strong style="font-weight:600;color:var(--ink);">프로브로 실측</strong>하고, 지식과 업무 체계를
+        <strong style="font-weight:600;color:var(--ink);">온톨로지 관점</strong>에서 분석·체계화합니다.
+        <strong style="font-weight:600;color:var(--ink);">겪은 것을 이해한 것으로</strong> 바꾸는 과정입니다.
+      </p>
+    ) : (
+      <p class="reveal" style="margin-top:1.5rem;max-width:64ch;color:var(--ink-2);font-size:var(--fz-lg);line-height:1.85;">
+        I reproduce configurations I meet as service requests in financial-cloud operations,
+        <strong style="font-weight:600;color:var(--ink);">measuring downtime with probes</strong>, and analyze and
+        systematize knowledge through an <strong style="font-weight:600;color:var(--ink);">ontology lens</strong> —
+        <strong style="font-weight:600;color:var(--ink);">turning what I've experienced into what I understand</strong>.
+      </p>
+    )}
+  </div>
+</section>
+
+{/* ── infra-lab 3랩 ── */}
+<Labs locale={locale} />
+
+{/* ── 배포 순단 실측 재현 차트 (INF-01) ── */}
+<section class="sec" id="dev-chart">
+  <div class="wrap">
+    <figure class="chart-fig reveal">
+      <div class="chart-media"><FigInfraChart /></div>
+      <figcaption class="chart-cap">
+        <span class="chart-sec mono">{C.chartSec} · {inf01.value}</span>
+        <span class="chart-desc">{C.chartCap}</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+{/* ── 프로젝트 카드 ── */}
+<section class="sec" id="dev-projects">
+  <div class="wrap">
+    <span class="k reveal">{C.projK}</span>
+    <h2 class="d2 reveal" style="margin-top:12px;">{C.projTitle}</h2>
+
+    <div class="proj-grid" style="margin-top:2.5rem;">
+      {projects.map((p) => (
+        <article class="card proj-card reveal">
+          <header class="proj-head">
+            <span class="k">{p.data.cat[locale]}</span>
+            <span class="proj-year mono">{p.data.year}</span>
+          </header>
+          <h3 class="proj-title">{p.data.title[locale]}</h3>
+          <p class="proj-sub">{p.data.sub[locale]}</p>
+          <p class="proj-desc">{p.data.desc[locale]}</p>
+
+          <ul class="proj-tech">
+            {p.data.tech.map((tName) => (
+              <li class="mono">{lab(tName)}</li>
+            ))}
+          </ul>
+
+          <footer class="proj-foot">
+            <span class="proj-status mono">{p.data.status[locale]}</span>
+            <div class="proj-links">
+              {p.data.links.map((l) => (
+                <a href={l.href} target="_blank" rel="noopener" class="proj-link">
+                  {lab(l.label)}
+                  <span aria-hidden="true" class="proj-link-arrow">↗</span>
+                </a>
+              ))}
+            </div>
+          </footer>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+{/* ── 기술 스택 그룹 ── */}
+<section class="sec" id="dev-stack">
+  <div class="wrap">
+    <span class="k reveal">{C.stackK}</span>
+    <h2 class="d2 reveal" style="margin-top:12px;">{C.stackTitle}</h2>
+
+    <div class="stack-grid" style="margin-top:2.5rem;">
+      {stack.map((s) => (
+        <article class="card stack-card reveal">
+          <span class="k">{s.k}</span>
+          <h3 class="stack-group">{s.group[locale]}</h3>
+          <ul class="stack-items">
+            {s.items[locale].map((it) => (
+              <li>{it}</li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+{/* ── 메인 복귀 ── */}
+<section class="sec">
+  <div class="wrap">
+    <a class="back-home reveal" href={localeHref(locale, '/')}>
+      <span aria-hidden="true">←</span>
+      <span>{C.back}</span>
+    </a>
+  </div>
+</section>
+
+<style>
+  /* ── 배포 순단 재현 차트 ── */
+  .chart-fig {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+    max-width: 820px;
+  }
+  .chart-media { aspect-ratio: 4 / 3; border-right: 1px solid var(--border-soft, var(--border)); }
+  .chart-cap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+    padding: clamp(18px, 3vw, 28px);
+  }
+  .chart-sec {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.06em;
+    color: var(--accent);
+  }
+  .chart-desc { color: var(--ink-2); font-size: var(--fz-sm); line-height: 1.8; }
+  @media (max-width: 720px) {
+    .chart-fig { grid-template-columns: 1fr; max-width: 480px; }
+    .chart-media { border-right: none; border-bottom: 1px solid var(--border-soft, var(--border)); }
+  }
+
+  /* ── 프로젝트 카드 ── */
+  .proj-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .proj-card { display: flex; flex-direction: column; gap: 12px; }
+  .proj-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .proj-year { font-size: var(--fz-xxs); color: var(--ink-3); }
+  .proj-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-h3);
+    font-weight: 400;
+    line-height: 1.24;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-synthesis: none;
+  }
+  .proj-sub { color: var(--accent); font-size: var(--fz-sm); }
+  .proj-desc { color: var(--ink-2); font-size: var(--fz-sm); line-height: 1.8; }
+
+  .proj-tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-top: 4px;
+  }
+  .proj-tech li {
+    font-size: var(--fz-xxs);
+    color: var(--ink-3);
+    padding: 3px 9px;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+
+  .proj-foot {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .proj-status { font-size: var(--fz-xxs); color: var(--ink-3); line-height: 1.7; }
+  .proj-links { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+  .proj-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font: 500 var(--fz-xxs) / 1 var(--font-mono);
+    letter-spacing: 0.03em;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      background var(--dur) var(--ease);
+  }
+  .proj-link-arrow { color: var(--accent); transition: transform var(--dur) var(--ease); }
+  .proj-link:hover { color: var(--ink); border-color: var(--accent); background: var(--accent-tint); }
+  @media (hover: hover) and (pointer: fine) {
+    .proj-link:hover .proj-link-arrow { transform: translate(2px, -2px); }
+  }
+
+  /* ── 기술 스택 그리드 ── */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+  }
+  .stack-card { display: flex; flex-direction: column; gap: 12px; }
+  .stack-group {
+    font-family: var(--font-display);
+    font-size: var(--fz-xl);
+    font-weight: 400;
+    color: var(--ink);
+    font-synthesis: none;
+  }
+  .stack-items { display: flex; flex-direction: column; gap: 8px; }
+  .stack-items li {
+    position: relative;
+    padding-left: 18px;
+    color: var(--ink-2);
+    font-size: var(--fz-sm);
+    line-height: 1.6;
+  }
+  .stack-items li::before {
+    content: '▹';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  /* ── 메인 복귀 ── */
+  .back-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font: 500 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease), gap var(--dur) var(--ease);
+  }
+  .back-home:hover { color: var(--accent); gap: 14px; }
+</style>

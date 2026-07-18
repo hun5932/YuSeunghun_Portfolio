@@ -1,0 +1,229 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   minimal.css — 시안 A(미니멀) 원천 토큰 + 시그니처 장식
+   ───────────────────────────────────────────────────────────────────────────
+   스펙 정본: _analysis/variants-spec.md §「시안 A — 미니멀」
+   철학: 한지(warm paper) + 옻칠골드 단일 액센트. 링크 언더라인·포커스·강조
+        전부 이 한 색으로만(bchiang7 --green 단색 규율). 멀티 컬러 금지.
+
+   ▚ 이 파일이 정의하는 것 ▚
+     ① :root[data-variant="minimal"]            → 라이트(한지) 원천 --pf-*
+     ② :root[data-variant="minimal"][data-theme="dark"] → 다크(먹 야간) 원천 --pf-*
+     ③ 마스크 슬라이드업 리빌 (.reveal 오버라이드, clip-path wipe + translateY)
+     ④ inlineLink 언더라인 (::after width 0→100%)
+     ⑤ strange-loop 헤어라인 SVG 장식 셀렉터
+
+   ▚ 계약 준수 ▚ tokens.css 가 요구하는 원천 토큰만 재정의(색·서체). 시맨틱 매핑은 불변.
+     장식 셀렉터(.inlineLink / .strange-loop)는 시안 전용 — 계약 밖 자유 영역.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ① 라이트 — 한지 + 옻칠골드 (기본. tokens.css :root 폴백과 동일 계열이나
+      명시적으로 시안 스코프에 못박아 다른 시안과의 전환을 확실히 한다)
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="minimal"] {
+  /* 표면 (한지 웜페이퍼) */
+  --pf-bg:          #FAF6EC;  /* 페이지 배경 — 한지 */
+  --pf-surface:     #F3EDDE;  /* 카드·패널 */
+  --pf-surface-2:   #E8E0CC;  /* 승격 표면 */
+  --pf-border:      #D2C9B3;  /* 헤어라인 */
+  --pf-border-soft: #E3DDCC;  /* 옅은 구분선 */
+
+  /* 잉크 (먹) */
+  --pf-ink:         #1B1917;  /* 본문 기본 */
+  --pf-ink-2:       #403A31;  /* 보조 */
+  --pf-ink-3:       #5A5348;  /* 뮤트 — 한지 위 AA 통과 */
+
+  /* 액센트 (옻칠골드 단색) */
+  --pf-accent:      #A17C3A;  /* 단일 액센트 */
+  --pf-accent-2:    #C9A24B;  /* 밝은/hover — accent-bright */
+  --pf-accent-tint: rgba(161, 124, 58, 0.10);
+  --pf-on-accent:   #FAF6EC;
+  --pf-accent-text: #7A5A22;  /* 소형 텍스트(.k) 전용 진한 골드 — 한지 위 약 5.9:1 (AA 통과) */
+
+  /* 계측 수치 전용 (옻 red) */
+  --pf-measure:     #8A2E20;
+
+  /* 서체 — 절제된 산스 본문 + 명조 디스플레이(합성 이탤릭 금지, 시스템·CDN) */
+  --pf-font-display:    "Nanum Myeongjo", "Iowan Old Style", Georgia, "Noto Serif KR", serif;
+  --pf-font-display-en: "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --pf-font-body:       "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pf-font-mono:       ui-monospace, "SFMono-Regular", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* 시안 전용 장식 토큰 (계약 밖) */
+  --pf-loop-stroke: rgba(161, 124, 58, 0.28); /* strange-loop 헤어라인 */
+  --pf-mag-damp:    0.3;                        /* 마그넷 커서 감쇠(모션 모듈 참조) */
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ② 다크 — 먹 야간 (v3.1 ink 테마 구조 계승, 단 옻칠골드 단색 규율 유지)
+      배경은 따뜻한 near-black(한지의 온기를 밤으로), 액센트는 밝은 금.
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="minimal"][data-theme="dark"] {
+  --pf-bg:          #14130F;  /* 먹 야간 배경(웜) */
+  --pf-surface:     #1C1A15;
+  --pf-surface-2:   #26231C;
+  --pf-border:      #3A3529;
+  --pf-border-soft: #2A2720;
+
+  --pf-ink:         #F1EDE3;  /* 웜 오프화이트 */
+  --pf-ink-2:       #C4BEAE;
+  --pf-ink-3:       #928B7B;  /* 다크 위 AA 통과 목표 */
+
+  --pf-accent:      #C9A24B;  /* 밤에는 밝은 금이 단일 액센트 */
+  --pf-accent-2:    #DDBB6A;
+  --pf-accent-tint: rgba(201, 162, 75, 0.12);
+  --pf-on-accent:   #14130F;
+  --pf-accent-text: var(--pf-accent);  /* 다크 배경에선 밝은 금이 이미 대비 통과 → accent 그대로(라이트값 상속 차단) */
+
+  --pf-measure:     #E4715C;  /* 옻 red — 야간용으로 밝힘 */
+
+  --pf-loop-stroke: rgba(201, 162, 75, 0.30);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ③ 마스크 슬라이드업 리빌 — .reveal 오버라이드
+   ───────────────────────────────────────────────────────────────────────────
+   기법: 단일 요소에 clip-path 와이프(아래→위로 걷힘) + 살짝 밀어올림(translateY).
+        velocita/dev_portfolio 의 'overflow:hidden 래퍼 + 자식 translateY(100%→0)'
+        마스크 리빌을, 마크업 계약(단일 .reveal 요소)에 맞춰 clip-path 로 재구현.
+        (래퍼 자식 구조를 요구하지 않아 어떤 요소에도 안전하게 적용된다.)
+
+   특이도: html.js[data-variant="minimal"] .reveal (0,3,1) > base html.js .reveal (0,2,1)
+          → base.css 의 opacity 페이드 대신 clip-path 마스크가 가시성을 담당.
+
+   안전(스펙 D 원칙 상속): reduced-motion·print 에서 clip-path 를 반드시 none 으로
+          되돌린다. base 의 reduced/print 리셋은 clip-path 를 건드리지 않으므로
+          여기서 명시하지 않으면 본문이 영구히 클립되어 사라진다(치명).
+   ───────────────────────────────────────────────────────────────────────── */
+html.js[data-variant="minimal"] .reveal {
+  opacity: 1;                                  /* 가시성은 clip-path 가 담당 */
+  transform: translateY(1.15rem);
+  /* 상단 105% 클립 = 완전 은폐(아래 가장자리로 붕괴). 좌우·하단 음수 블리드로
+     디센더·포커스 아웃라인 오버슛 보호. */
+  clip-path: inset(105% -6% -8% -6%);
+  will-change: clip-path, transform;
+}
+
+/* IO 폴백 경로 — 교차 시 base 가 .is-in 부여 → 마스크 걷힘 */
+html.js[data-variant="minimal"] .reveal.is-in {
+  transform: translateY(0);
+  clip-path: inset(-8% -6% -8% -6%);           /* 전면 노출(사방 블리드) */
+  transition:
+    clip-path 0.85s var(--ease-expo),
+    transform 0.85s var(--ease-expo);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* 네이티브 scroll-driven 경로 — 지원 브라우저에서 우선 구동 */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html.js[data-variant="minimal"] .reveal {
+      animation: pf-reveal-mask linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 24%;
+    }
+  }
+}
+@keyframes pf-reveal-mask {
+  from {
+    transform: translateY(1.15rem);
+    clip-path: inset(105% -6% -8% -6%);
+  }
+  to {
+    transform: translateY(0);
+    clip-path: inset(-8% -6% -8% -6%);
+  }
+}
+
+/* reduced-motion: 마스크 해제, 즉시 온전히 보임 (clip-path 반드시 리셋) */
+@media (prefers-reduced-motion: reduce) {
+  html.js[data-variant="minimal"] .reveal {
+    clip-path: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}
+
+/* 인쇄: 마스크 무시하고 항상 온전히 보임 */
+@media print {
+  html.js[data-variant="minimal"] .reveal,
+  [data-variant="minimal"] .reveal {
+    clip-path: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ④ inlineLink 언더라인 — ::after width 0 → 100%
+   ───────────────────────────────────────────────────────────────────────────
+   출처: bchiang7 mixins.js inlineLink. 옻칠골드 단색 규율 — 언더라인도 액센트 1색.
+   본문 안 링크에 .inlineLink 부여. 호버/포커스에 밑선이 좌→우로 그어진다.
+   reduced-motion 에서는 트랜지션 없이 즉시 전체 밑선(가시성 유지).
+   ───────────────────────────────────────────────────────────────────────── */
+[data-variant="minimal"] .inlineLink {
+  position: relative;
+  color: var(--accent);
+  text-decoration: none;
+  padding-bottom: 1px;
+}
+[data-variant="minimal"] .inlineLink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.32s var(--ease-expo);
+}
+[data-variant="minimal"] .inlineLink:hover::after,
+[data-variant="minimal"] .inlineLink:focus-visible::after {
+  width: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-variant="minimal"] .inlineLink::after { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⑤ strange-loop 헤어라인 — SVG 장식 셀렉터
+   ───────────────────────────────────────────────────────────────────────────
+   TRIH '이상한 고리' 모티프를 미니멀 톤으로 극절제(단일 골드 헤어라인).
+   마크업(예): <svg class="strange-loop" viewBox=…><path d=…/></svg>
+   currentColor 로 stroke → 색 상속. 모션-safe 에서만 아주 느린 대시 흐름(선택),
+   reduced-motion/print 에서는 정적 헤어라인.
+   ───────────────────────────────────────────────────────────────────────── */
+[data-variant="minimal"] .strange-loop {
+  color: var(--pf-loop-stroke, var(--accent));
+  opacity: 0.9;
+}
+[data-variant="minimal"] .strange-loop path,
+[data-variant="minimal"] .strange-loop line,
+[data-variant="minimal"] .strange-loop circle,
+[data-variant="minimal"] .strange-loop polyline {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;  /* 스케일 무관 1px 헤어라인 유지 */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 모션-safe: 대시가 고리를 따라 아주 느리게 흐름(자기참조 순환 암시) */
+@media (prefers-reduced-motion: no-preference) {
+  html.js[data-variant="minimal"] .strange-loop[data-animate] path {
+    stroke-dasharray: 3 9;
+    animation: pf-loop-flow 14s linear infinite;
+  }
+}
+@keyframes pf-loop-flow {
+  to { stroke-dashoffset: -120; }
+}
+
+/* 인쇄: 장식 헤어라인은 잉크 절약 위해 아주 옅게 */
+@media print {
+  [data-variant="minimal"] .strange-loop { opacity: 0.25; }
+  html.js[data-variant="minimal"] .strange-loop[data-animate] path { animation: none; }
+}

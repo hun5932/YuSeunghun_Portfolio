@@ -1,0 +1,438 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// ResearchTrack.astro — 연구자 하이브리드 트랙 본문 (locale 파라미터화)
+//   인트로(TRIH 한 단락) → TrihInspector(4노드 탭) → Publications
+//   → 연구 관심(학제간 4영역) → 메인 복귀 링크.
+//   · research/index.astro(ko) · en/research/index.astro(en) 가 공유.
+//   수치는 facts.json만 · 내부 링크는 localeHref 경유.
+// ═══════════════════════════════════════════════════════════════════════════
+import Publications from '../sections/Publications.astro';
+import FigCrabCanon from '../svg/FigCrabCanon.astro';
+import FigGodelNumbering from '../svg/FigGodelNumbering.astro';
+import FigInductionHead from '../svg/FigInductionHead.astro';
+import { getCollection } from 'astro:content';
+import { localeHref } from '../../lib/url';
+import { t, type Locale } from '../../i18n/ui';
+import facts from '../../data/facts.json';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const ko = locale === 'ko';
+
+// 4노드 인스펙터 데이터 — trih 컬렉션(no 오름차순).
+const nodes = (await getCollection('trih')).sort((a, b) => a.data.no - b.data.no);
+
+// THE-04 계측 하이라이트(109k자·참고문헌 70편) — facts.json 인용.
+const the04 = facts.measured.find((m) => m.factId === 'THE-04')!;
+
+// 연구 관심 — 학제간 4영역(TRIH를 둘러싼 연구 프로그램). 수치 없음.
+const interests = [
+  {
+    k: 'AREA 01',
+    title: { ko: '자기참조 · 이상한 고리', en: 'Self-reference · strange loops' },
+    desc: {
+      ko: '형식체계가 괴델 넘버링으로 자기 자신을 가리키는 구조. 수리논리·계산이론(괴델·튜링·처치).',
+      en: 'A formal system pointing to itself through Gödel numbering. Mathematical logic & computability (Gödel, Turing, Church).',
+    },
+  },
+  {
+    k: 'AREA 02',
+    title: { ko: '창발 · 임계성', en: 'Emergence · criticality' },
+    desc: {
+      ko: '자기참조가 임계 복잡도를 넘을 때 새로운 위계가 출현하는 지점. 복잡계·자유에너지 원리.',
+      en: 'The point where self-reference, crossing a critical complexity, gives rise to a new hierarchy. Complex systems & the free-energy principle.',
+    },
+  },
+  {
+    k: 'AREA 03',
+    title: { ko: 'AI / LLM 해석가능성', en: 'AI / LLM interpretability' },
+    desc: {
+      ko: '트랜스포머 self-attention의 자기참조 회로를 회로 수준에서 관찰. Mechanistic Interpretability.',
+      en: 'Observing the self-referential circuits of transformer self-attention at the circuit level. Mechanistic interpretability.',
+    },
+  },
+  {
+    k: 'AREA 04',
+    title: { ko: '의식 · 인지과학 · 동양 사상', en: 'Consciousness · cognitive science · Eastern thought' },
+    desc: {
+      ko: 'Hard Problem·전역 작업공간 이론과 불교 연기·화엄의 상호의존 구조를 자기참조로 잇기.',
+      en: 'Bridging the Hard Problem and Global Workspace Theory with the interdependence of Buddhist dependent-origination and Huayan, through self-reference.',
+    },
+  },
+];
+
+// 인라인 마이크로카피
+const C = {
+  headHtml: ko ? '네 영역이 <em>같은 고리</em>를 그린다' : 'Four domains draw <em>the same loop</em>',
+  gloss: ko ? 'Four domains, one strange loop' : '네 영역, 하나의 이상한 고리',
+  interestsK: ko ? '연구 관심' : 'Research interests',
+  interestsTitle: ko ? 'TRIH를 둘러싼 학제간 프로그램' : 'An interdisciplinary program around TRIH',
+  parallelNote: ko
+    ? '§4 리체르카레 ↔ 트랜스포머는 형식 평행(formal parallel)으로 다룹니다 — 동형(isomorphism)이라는 강한 주장은 시각·논리 영역에 한정합니다.'
+    : '§4 Ricercar ↔ Transformer is treated as a formal parallel — the stronger claim of isomorphism is reserved for the visual and logical domains.',
+  back: ko ? '메인으로 돌아가기' : 'Back to main',
+  figsK: ko ? '동형 도판' : 'Isomorphic figures',
+  figsTitle: ko ? '세 영역, 하나의 자기참조 구조' : 'Three domains, one self-referential structure',
+  figsNote: ko
+    ? '§4 바흐 · §5 괴델 · §6 트랜스포머 — 각 영역의 자기참조 구조를 자체 제작한 개념 도판(SVG).'
+    : '§4 Bach · §5 Gödel · §6 Transformer — self-made conceptual figures (SVG) of each domain\'s self-referential structure.',
+};
+
+// 3영역 동형 도판 — 캡션(ko/en). Fig 컴포넌트는 aria-label 보유, figcaption이 본문 대체.
+const figs = [
+  {
+    C: FigCrabCanon,
+    sec: '§4',
+    domain: { ko: '바흐 · 크랩 캐논', en: 'Bach · Crab Canon' },
+    cap: {
+      ko: '같은 선율을 한 성부는 정방향, 다른 성부는 역방향으로 — 대칭축을 사이에 둔 게(蟹)의 걸음.',
+      en: 'One voice forward, the other in retrograde — a crab\'s walk across the axis of symmetry.',
+    },
+  },
+  {
+    C: FigGodelNumbering,
+    sec: '§5',
+    domain: { ko: '괴델 · 넘버링', en: 'Gödel · numbering' },
+    cap: {
+      ko: '기호열이 소수 지수로 인코딩되어 하나의 수 G가 되고, 그 수가 다시 자신을 지시하는 명제로 되돌아온다.',
+      en: 'A string of symbols is encoded as prime exponents into a single number G, which loops back to name its own proposition.',
+    },
+  },
+  {
+    C: FigInductionHead,
+    sec: '§6',
+    domain: { ko: '트랜스포머 · induction head', en: 'Transformer · induction head' },
+    cap: {
+      ko: '어텐션이 이전 A 다음의 B를 되짚어 다음 토큰을 예측하는 2-레이어 회로 — self-attention의 자기참조.',
+      en: 'A two-layer circuit where attention looks back to the B after a prior A to predict the next token — self-attention\'s self-reference.',
+    },
+  },
+];
+---
+
+{/* ── 인트로: TRIH 한 단락 ── */}
+<section class="sec" id="research">
+  <div class="wrap">
+    <span class="k reveal">{t(locale, 'track.research')}</span>
+    <h1 class="d1 reveal" style="margin-top:1rem;max-width:16ch;">
+      <Fragment set:html={C.headHtml} />
+      <span class="gloss" style="display:block;margin-top:14px;font-size:var(--fz-lg);">{C.gloss}</span>
+    </h1>
+    {ko ? (
+      <p class="reveal" style="margin-top:1.5rem;max-width:64ch;color:var(--ink-2);font-size:var(--fz-lg);line-height:1.85;">
+        에셔의 그림, 바흐의 카논, 괴델의 정리, 트랜스포머의 self-attention — 서로 무관해 보이는
+        네 영역이 <strong style="font-weight:600;color:var(--ink);">환원 → 자기참조 → 창발</strong>이라는
+        하나의 3단계 형식 모델을 공유합니다. 자기참조가 임계 복잡도를 넘을 때 창발이 일어나며, 그 구조가
+        영역 간 형식적으로 동형이라는 것이 <strong style="font-weight:600;color:var(--ink);">임계 재귀적 동형성
+        가설(TRIH)</strong>입니다.
+      </p>
+    ) : (
+      <p class="reveal" style="margin-top:1.5rem;max-width:64ch;color:var(--ink-2);font-size:var(--fz-lg);line-height:1.85;">
+        Escher's drawings, Bach's canons, Gödel's theorems, the self-attention of transformers — four
+        seemingly unrelated domains share a single three-stage formal model:
+        <strong style="font-weight:600;color:var(--ink);"> reduction → self-reference → emergence</strong>.
+        The claim that emergence occurs once self-reference crosses a critical complexity, and that this
+        structure is formally isomorphic across domains, is the
+        <strong style="font-weight:600;color:var(--ink);"> Threshold Recursive Isomorphism Hypothesis (TRIH)</strong>.
+      </p>
+    )}
+
+    {/* THE-04 계측 하이라이트 */}
+    <div class="the-measure reveal" role="figure">
+      <span class="num" style="font-size:var(--fz-h3);">{the04.value}</span>
+      <span style="color:var(--ink-2);font-size:var(--fz-sm);">{the04.label[locale]}</span>
+    </div>
+  </div>
+</section>
+
+{/* ── TrihInspector: 4노드 탭 인스펙터 ── */}
+<section class="sec" id="trih-inspector">
+  <div class="wrap">
+    <span class="k reveal">{t(locale, 'section.approach')}</span>
+    <h2 class="d2 reveal" style="margin-top:12px;">{t(locale, 'section.approach.sub')}</h2>
+
+    <div class="insp reveal" data-insp>
+      {/* 노드 탭 리스트 (ARIA tablist) */}
+      <div class="insp-nodes" role="tablist" aria-label="TRIH" aria-orientation="horizontal">
+        {nodes.map((n, i) => (
+          <button
+            type="button"
+            role="tab"
+            id={`insp-tab-${n.data.key}`}
+            class="insp-node"
+            data-node={n.data.key}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            aria-controls={`insp-panel-${n.data.key}`}
+            tabindex={i === 0 ? 0 : -1}
+          >
+            <span class="insp-node-domain mono">{n.data.domain[locale]}</span>
+            <span class="insp-node-figure">{n.data.figure[locale]}</span>
+            <span class="insp-node-tag mono">{n.data.tag}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* 상세 패널 (ARIA tabpanel) */}
+      {nodes.map((n, i) => (
+        <div
+          role="tabpanel"
+          id={`insp-panel-${n.data.key}`}
+          class="insp-panel"
+          data-panel={n.data.key}
+          aria-labelledby={`insp-tab-${n.data.key}`}
+          hidden={i !== 0}
+        >
+          <p class="insp-mech mono">{n.data.mechanism[locale]}</p>
+          <p class="insp-detail">{n.data.detail[locale]}</p>
+        </div>
+      ))}
+    </div>
+
+    <p class="reveal" style="margin-top:1.75rem;font-size:var(--fz-sm);color:var(--ink-3);">{C.parallelNote}</p>
+
+    {/* ── 3영역 동형 도판 (§4 바흐 / §5 괴델 / §6 트랜스포머) ── */}
+    <div class="figs-head reveal" style="margin-top:3.5rem;">
+      <span class="k">{C.figsK}</span>
+      <h3 class="figs-title">{C.figsTitle}</h3>
+      <p class="figs-note">{C.figsNote}</p>
+    </div>
+    <div class="fig-grid">
+      {figs.map((f) => (
+        <figure class="fig-card reveal">
+          <div class="fig-media"><f.C /></div>
+          <figcaption class="fig-cap">
+            <span class="fig-sec mono">{f.sec} · {f.domain[locale]}</span>
+            <span class="fig-desc">{f.cap[locale]}</span>
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  </div>
+</section>
+
+{/* ── 논문 · 공개 기록 ── */}
+<Publications locale={locale} />
+
+{/* ── 연구 관심: 학제간 4영역 ── */}
+<section class="sec" id="research-interests">
+  <div class="wrap">
+    <span class="k reveal">{C.interestsK}</span>
+    <h2 class="d2 reveal" style="margin-top:12px;max-width:22ch;">{C.interestsTitle}</h2>
+
+    <div class="int-grid" style="margin-top:2.5rem;">
+      {interests.map((it) => (
+        <article class="card int-card reveal">
+          <span class="k">{it.k}</span>
+          <h3 class="int-title">{it.title[locale]}</h3>
+          <p class="int-desc">{it.desc[locale]}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+{/* ── 메인 복귀 ── */}
+<section class="sec">
+  <div class="wrap">
+    <a class="back-home reveal" href={localeHref(locale, '/')}>
+      <span aria-hidden="true">←</span>
+      <span>{C.back}</span>
+    </a>
+  </div>
+</section>
+
+<style>
+  .the-measure {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    padding: 18px 22px;
+    border-left: 3px solid var(--measure);
+    background: var(--surface);
+  }
+
+  /* ── 인스펙터 ── */
+  .insp { margin-top: 2.5rem; }
+  .insp-nodes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .insp-node {
+    text-align: left;
+    padding: 16px 16px 18px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease),
+      transform var(--dur) var(--ease);
+  }
+  .insp-node-domain {
+    display: block;
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .insp-node-figure {
+    display: block;
+    margin-top: 8px;
+    font-family: var(--font-display);
+    font-size: var(--fz-xl);
+    font-weight: 400;
+    color: var(--ink);
+    font-synthesis: none;
+  }
+  .insp-node-tag {
+    display: block;
+    margin-top: 8px;
+    font-size: var(--fz-xxs);
+    color: var(--ink-3);
+    letter-spacing: 0.02em;
+  }
+  .insp-node[aria-selected='true'] {
+    border-color: var(--accent);
+    background: var(--accent-tint);
+  }
+  .insp-node[aria-selected='true'] .insp-node-figure { color: var(--accent); }
+  @media (hover: hover) and (pointer: fine) {
+    .insp-node:hover { border-color: var(--ink-3); }
+    .insp-node[aria-selected='true']:hover { border-color: var(--accent); }
+  }
+
+  .insp-panel {
+    margin-top: 14px;
+    padding: clamp(20px, 3vw, 30px);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+    background: var(--surface);
+  }
+  .insp-mech {
+    font-size: var(--fz-sm);
+    color: var(--accent);
+    letter-spacing: 0.01em;
+  }
+  .insp-detail {
+    margin-top: 14px;
+    max-width: 72ch;
+    color: var(--ink-2);
+    font-size: var(--fz-md);
+    line-height: 1.85;
+  }
+
+  @media (max-width: 720px) {
+    .insp-nodes { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 420px) {
+    .insp-nodes { grid-template-columns: 1fr; }
+  }
+
+  /* ── 3영역 동형 도판 그리드 ── */
+  .figs-head { display: flex; flex-direction: column; gap: 10px; }
+  .figs-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-h3);
+    font-weight: 400;
+    line-height: 1.28;
+    color: var(--ink);
+    font-synthesis: none;
+    max-width: 24ch;
+  }
+  .figs-note { max-width: 64ch; color: var(--ink-2); font-size: var(--fz-sm); line-height: 1.75; }
+  .fig-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 2rem;
+  }
+  .fig-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .fig-media { aspect-ratio: 4 / 3; border-bottom: 1px solid var(--border-soft, var(--border)); }
+  .fig-cap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 18px 18px;
+  }
+  .fig-sec {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.06em;
+    color: var(--accent);
+  }
+  .fig-desc { color: var(--ink-2); font-size: var(--fz-sm); line-height: 1.7; }
+  @media (max-width: 860px) {
+    .fig-grid { grid-template-columns: 1fr; max-width: 480px; }
+  }
+
+  /* ── 연구 관심 그리드 ── */
+  .int-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .int-card { display: flex; flex-direction: column; gap: 10px; }
+  .int-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-xl);
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--ink);
+    font-synthesis: none;
+  }
+  .int-desc { color: var(--ink-2); font-size: var(--fz-sm); line-height: 1.75; }
+
+  /* ── 메인 복귀 ── */
+  .back-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font: 500 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease), gap var(--dur) var(--ease);
+  }
+  .back-home:hover { color: var(--accent); gap: 14px; }
+</style>
+
+<script>
+  // ── TrihInspector 탭 상호작용 (ARIA tabs · 화살표키 지원) ──
+  const insp = document.querySelector<HTMLElement>('[data-insp]');
+  if (insp) {
+    const tabs = Array.from(insp.querySelectorAll<HTMLButtonElement>('.insp-node'));
+    const panels = Array.from(insp.querySelectorAll<HTMLElement>('.insp-panel'));
+
+    const 활성화 = (key: string, focus = false) => {
+      tabs.forEach((tab) => {
+        const on = tab.dataset.node === key;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+        if (on && focus) tab.focus();
+      });
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== key;
+      });
+    };
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => 활성화(tab.dataset.node || ''));
+      tab.addEventListener('keydown', (e) => {
+        let next = -1;
+        if (e.key === 'ArrowRight') next = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft') next = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = tabs.length - 1;
+        if (next >= 0) {
+          e.preventDefault();
+          활성화(tabs[next].dataset.node || '', true);
+        }
+      });
+    });
+  }
+</script>

@@ -1,0 +1,133 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Publications.astro — publications 컬렉션 렌더 (논문 · 공개 기록)
+//   연도 · venue(게시처·상태) · 초록 · 외부 링크 버튼들.
+//   외부 링크(DOI/OSF/GitHub/ORCID)는 절대 URL → withBase 불필요.
+//   섹션 셸: .sec/.wrap/.k/.d2 + 시맨틱 토큰만 소비.
+// ═══════════════════════════════════════════════════════════════════════════
+import { getCollection } from 'astro:content';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  id?: string; // 섹션 앵커 (기본 publications)
+}
+const { locale, id = 'publications' } = Astro.props;
+// 언어중립 링크 라벨 해석 — 문자열이면 그대로, {ko,en} 객체면 locale 분기.
+const lab = (v: string | { ko: string; en: string }) => (typeof v === 'string' ? v : v[locale]);
+
+// 연도 내림차순 정렬 — 최신 논문이 위로.
+const pubs = (await getCollection('publications')).sort((a, b) =>
+  b.data.year.localeCompare(a.data.year)
+);
+---
+
+<section class="sec" id={id}>
+  <div class="wrap">
+    <span class="k reveal">{t(locale, 'section.publications')}</span>
+    <h2 class="d2 reveal" style="margin-top:12px;max-width:22ch;">
+      {locale === 'ko' ? '검증 가능한 학술 기록' : 'Verifiable scholarly records'}
+    </h2>
+
+    <ul class="pubs" style="margin-top:2.5rem;">
+      {pubs.map((p) => (
+        <li class="pub reveal">
+          <div class="pub-year">
+            <span class="num">{p.data.year}</span>
+          </div>
+          <div class="pub-body">
+            <h3 class="pub-title">{p.data.title[locale]}</h3>
+            <p class="pub-orig lat">{p.data.titleEn}</p>
+            <p class="pub-meta mono">{p.data.authors} · {p.data.venue[locale]}</p>
+            {p.data.abstract && (
+              <p class="pub-abstract">{p.data.abstract[locale]}</p>
+            )}
+            <div class="pub-links">
+              {p.data.links.map((l) => (
+                <a href={l.href} target="_blank" rel="noopener" class="pub-link">
+                  {lab(l.label)}
+                  <span class="pub-link-arrow" aria-hidden="true">↗</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .pubs { display: flex; flex-direction: column; gap: 0; }
+
+  .pub {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: clamp(16px, 3vw, 40px);
+    padding-block: clamp(28px, 4vw, 40px);
+    border-top: 1px solid var(--border);
+  }
+  .pub:last-child { border-bottom: 1px solid var(--border); }
+
+  .pub-year { padding-top: 4px; }
+  .pub-year .num { font-size: var(--fz-md); }
+
+  .pub-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-h3);
+    line-height: 1.24;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+    color: var(--ink);
+    font-synthesis: none;
+  }
+  .pub-orig { margin-top: 6px; font-size: var(--fz-sm); }
+  .pub-meta {
+    margin-top: 12px;
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.03em;
+    color: var(--ink-3);
+    line-height: 1.7;
+  }
+  .pub-abstract {
+    margin-top: 16px;
+    max-width: 66ch;
+    color: var(--ink-2);
+    font-size: var(--fz-sm);
+    line-height: 1.8;
+  }
+
+  .pub-links {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+  .pub-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font: 500 var(--fz-xxs) / 1 var(--font-mono);
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      background var(--dur) var(--ease);
+  }
+  .pub-link-arrow { color: var(--accent); transition: transform var(--dur) var(--ease); }
+  .pub-link:hover {
+    color: var(--ink);
+    border-color: var(--accent);
+    background: var(--accent-tint);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .pub-link:hover .pub-link-arrow { transform: translate(2px, -2px); }
+  }
+
+  @media (max-width: 560px) {
+    .pub { grid-template-columns: 1fr; gap: 8px; }
+    .pub-year { padding-top: 0; }
+  }
+</style>

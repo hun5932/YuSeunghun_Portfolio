@@ -1,0 +1,165 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Labs.astro — infra-lab 핸즈온 랩 3종 표 (web-was / k8s-oss / observability)
+//   핵심 실측 수치는 facts.json(INF-01)만 인용 — 컴포넌트에 하드코딩 금지.
+//   GitHub 링크는 절대 URL(facts.profile.links) → withBase 불필요.
+// ═══════════════════════════════════════════════════════════════════════════
+import { t, type Locale } from '../../i18n/ui';
+import facts from '../../data/facts.json';
+
+interface Props {
+  locale: Locale;
+  id?: string;
+}
+const { locale, id = 'labs' } = Astro.props;
+
+const inf01 = facts.measured.find((m) => m.factId === 'INF-01')!;
+const ghInfra = facts.profile.links.infraLab;
+
+// 3종 랩 정의 — 구조 설명(수치 없음). 실측은 아래 INF-01 하이라이트가 담당.
+const labs = [
+  {
+    slug: 'web-was',
+    name: { ko: 'web / WAS 3계층', en: 'web / WAS three-tier' },
+    stack: 'NGINX · Tomcat · MySQL · Redis',
+    focus: {
+      ko: '세션 실험 · 장애 주입 · 502 vs 504 원인 규명',
+      en: 'Session experiments · fault injection · root-causing 502 vs 504',
+    },
+  },
+  {
+    slug: 'k8s-oss',
+    name: { ko: 'Kubernetes 무중단', en: 'Kubernetes zero-downtime' },
+    stack: 'kind · Deployment · rolling update',
+    focus: {
+      ko: '단일 인스턴스 패치 vs 롤링 업데이트(maxUnavailable: 0) 순단 비교',
+      en: 'Single-instance patch vs rolling update (maxUnavailable: 0) downtime comparison',
+    },
+  },
+  {
+    slug: 'observability',
+    name: { ko: '관측성 · SLA', en: 'Observability · SLA' },
+    stack: 'Prometheus · Grafana · Python',
+    focus: {
+      ko: '알람 pending → firing 라이프사이클 · 가동률 ↔ 허용 다운타임 SLA 툴킷',
+      en: 'Alert pending → firing lifecycle · availability ↔ allowed-downtime SLA toolkit',
+    },
+  },
+];
+---
+
+<section class="sec" id={id}>
+  <div class="wrap">
+    <span class="k reveal">{t(locale, 'section.labs')}</span>
+    <h2 class="d2 reveal" style="margin-top:12px;max-width:24ch;">
+      {locale === 'ko'
+        ? '무중단은 아키텍처의 산물 — 재현과 실측으로'
+        : 'Zero-downtime is a product of architecture — reproduced and measured'}
+    </h2>
+
+    <!-- INF-01 실측 하이라이트 — 셀 수 있는 실물만 계측색으로 -->
+    <div class="lab-measure reveal" role="figure">
+      <span class="lab-measure-val num">{inf01.value}</span>
+      <span class="lab-measure-lab">{inf01.label[locale]}</span>
+    </div>
+
+    <!-- 3종 랩 표 -->
+    <div class="lab-table-wrap reveal">
+      <table class="lab-table">
+        <thead>
+          <tr>
+            <th scope="col">{locale === 'ko' ? '랩' : 'Lab'}</th>
+            <th scope="col">{locale === 'ko' ? '스택' : 'Stack'}</th>
+            <th scope="col">{locale === 'ko' ? '핵심 실증' : 'What it demonstrates'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {labs.map((l) => (
+            <tr>
+              <th scope="row" class="lab-name">
+                <span class="lab-slug mono">{l.slug}</span>
+                <span class="lab-name-ko">{l.name[locale]}</span>
+              </th>
+              <td class="lab-stack mono">{l.stack}</td>
+              <td class="lab-focus">{l.focus[locale]}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <a href={ghInfra} target="_blank" rel="noopener" class="lab-gh reveal">
+      <span class="mono">GitHub — infra-lab</span>
+      <span class="lab-gh-arrow" aria-hidden="true">↗</span>
+    </a>
+  </div>
+</section>
+
+<style>
+  .lab-measure {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    padding: 20px 24px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--measure);
+    background: var(--surface);
+  }
+  .lab-measure-val { font-size: var(--fz-h2); line-height: 1; }
+  .lab-measure-lab { color: var(--ink-2); font-size: var(--fz-sm); }
+
+  .lab-table-wrap { margin-top: 2rem; overflow-x: auto; }
+  .lab-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  .lab-table th,
+  .lab-table td {
+    text-align: left;
+    vertical-align: top;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .lab-table thead th {
+    font: 500 var(--fz-xxs) / 1 var(--font-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+  }
+  .lab-name { min-width: 190px; }
+  .lab-slug {
+    display: block;
+    font-size: var(--fz-xxs);
+    color: var(--ink-3);
+    letter-spacing: 0.06em;
+  }
+  .lab-name-ko {
+    display: block;
+    margin-top: 4px;
+    font-weight: 500;
+    color: var(--ink);
+    font-size: var(--fz-md);
+  }
+  .lab-stack { font-size: var(--fz-xs); color: var(--ink-3); line-height: 1.7; }
+  .lab-focus { color: var(--ink-2); font-size: var(--fz-sm); line-height: 1.7; }
+
+  .lab-gh {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2rem;
+    padding: 10px 18px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      background var(--dur) var(--ease);
+  }
+  .lab-gh-arrow { color: var(--accent); transition: transform var(--dur) var(--ease); }
+  .lab-gh:hover { color: var(--ink); border-color: var(--accent); background: var(--accent-tint); }
+  @media (hover: hover) and (pointer: fine) {
+    .lab-gh:hover .lab-gh-arrow { transform: translate(2px, -2px); }
+  }
+</style>

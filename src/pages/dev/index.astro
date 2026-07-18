@@ -1,0 +1,17 @@
+---
+// dev/index.astro — 개발 · 인프라 트랙 (ko).
+// 본문 조립은 DevTrack 컴포넌트가 담당 — en/dev 와 공유.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DevTrack from '../../components/tracks/DevTrack.astro';
+import { t } from '../../i18n/ui';
+import facts from '../../data/facts.json';
+
+const locale = 'ko' as const;
+const title = `${facts.profile.name.ko} — ${t(locale, 'track.dev')}`;
+const description =
+  '개발·인프라 트랙. 금융 클라우드 현직에서 SR로 접한 구성을 직접 재현·실측한 infra-lab, 개인 지식 체계 SEUNGHUN OS, 그리고 AI·Python·IT서비스·지식관리 기술 스택.';
+---
+
+<BaseLayout locale={locale} title={title} description={description}>
+  <DevTrack locale={locale} />
+</BaseLayout>

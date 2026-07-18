@@ -1,0 +1,17 @@
+---
+// en/dev/index.astro — Dev · infra track (en).
+// Shares DevTrack with the ko page; only locale='en' differs.
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import DevTrack from '../../../components/tracks/DevTrack.astro';
+import { t } from '../../../i18n/ui';
+import facts from '../../../data/facts.json';
+
+const locale = 'en' as const;
+const title = `${facts.profile.name.en} — ${t(locale, 'track.dev')}`;
+const description =
+  'Dev & infra track: infra-lab reproductions with measured downtime, SEUNGHUN OS (a 4,300+ note personal knowledge system), and a stack across AI, Python, IT service and knowledge management.';
+---
+
+<BaseLayout locale={locale} title={title} description={description}>
+  <DevTrack locale={locale} />
+</BaseLayout>

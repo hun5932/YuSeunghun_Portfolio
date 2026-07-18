@@ -1,0 +1,212 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   tradition.css — 시안 B「전통 × 현대」 (한지 + 옻칠골드 + 나전 shimmer + 벤토)
+   ───────────────────────────────────────────────────────────────────────────
+   스펙 정본: _analysis/variants-spec.md §시안 B
+   계약: :root[data-variant="tradition"] 에서 tokens.css 의 --pf-* 원천만 재정의
+         + 이 시안 전용 장식 셀렉터(.works-grid 벤토 / 나전 shimmer / 그레인 …).
+   차용(패턴 재구현): dillionverma 벤토·bchiang7 리프트/오프셋프레임·velocita shimmer 발상.
+   원칙: rAF 무한루프 금지(그레인은 정적 SVG feTurbulence 를 body 배경으로 베이크).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── ① 원천 토큰 (라이트 = 기본 색모드) ─── */
+:root[data-variant="tradition"] {
+  /* 표면 (한지) */
+  --pf-bg:          #EDE4D0;  /* 한지 페이지 */
+  --pf-surface:     #F6EFDF;  /* 벤토 셀 카드 */
+  --pf-surface-2:   #E0D4BA;  /* 깊은 표면 */
+  --pf-border:      #D6C6A2;  /* 헤어라인 */
+  --pf-border-soft: #E5D9BF;  /* 옅은 구분선 */
+
+  /* 잉크 (수묵) */
+  --pf-ink:         #23201A;  /* 본문 기본 */
+  --pf-ink-2:       #46402F;  /* 보조 */
+  --pf-ink-3:       #6A6153;  /* 뮤트 */
+
+  /* 액센트 (옻칠골드 primary) */
+  --pf-accent:      #A17C3A;
+  --pf-accent-2:    #C9A24B;
+  --pf-accent-tint: rgba(161, 124, 58, 0.10);
+  --pf-on-accent:   #F6EFDF;
+  --pf-accent-text: #6E5320;  /* 소형 텍스트(.k) 전용 진한 골드 — 한지 위 약 5.7:1 (AA 통과) */
+
+  /* 계측 수치 전용 — 단청 red (극절제 secondary) */
+  --pf-measure:     #B23A3A;
+
+  /* 서체 — 한·영 명조 페어링. 커스텀 폰트 미다운로드(규칙 ⑤): 시스템에 있으면 사용,
+     없으면 시스템 세리프로 폴백. 본문/모노는 공통 스택 유지. */
+  --pf-font-display:    "Nanum Myeongjo", "AppleMyungjo", Batang, ui-serif, Georgia, "Noto Serif KR", serif;
+  --pf-font-display-en: "Playfair Display", "Bodoni Moda", ui-serif, Georgia, "Times New Roman", serif;
+  --pf-font-body:       "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pf-font-mono:       ui-monospace, "SFMono-Regular", "JetBrains Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+
+  /* ─── 시안 전용 장식 토큰 (계약 밖) ─── */
+  --pf-dancheong: #B23A3A;   /* 단청 red */
+  --pf-celadon:   #7FA99B;   /* 청자 (선택) */
+  /* 나전(자개) shimmer 그라디언트 */
+  --pf-najeon: linear-gradient(115deg, #4FB3A8 0%, #7B6CC4 38%, #D98BA5 62%, #4FB3A8 100%);
+}
+
+/* ─── 다크 색모드 (선택 축 — 야간 한지/먹) ─── */
+:root[data-variant="tradition"][data-theme="dark"] {
+  --pf-bg:          #1B1813;
+  --pf-surface:     #24201A;
+  --pf-surface-2:   #2E2820;
+  --pf-border:      #3A3327;
+  --pf-border-soft: #2C271F;
+  --pf-ink:         #EDE4D0;
+  --pf-ink-2:       #CDBFA0;
+  --pf-ink-3:       #9A8F78;
+  --pf-accent:      #C9A24B;
+  --pf-accent-2:    #E0BE6A;
+  --pf-accent-tint: rgba(201, 162, 75, 0.12);
+  --pf-on-accent:   #1B1813;
+  --pf-measure:     #D9694E;
+  --pf-accent-text: var(--pf-accent);  /* 다크 배경에선 밝은 금이 이미 대비 통과 → accent 그대로(라이트값 상속 차단) */
+}
+
+/* ─── ② 한지 그레인 — 정적 SVG feTurbulence 를 body 배경에 직접 베이크 ───
+   무한 rAF 제거(스펙 기각 사유). 노이즈는 카드 뒤 '배경층'으로만 존재하므로
+   듀오톤 mix-blend 카드와 충돌하지 않는다. feColorMatrix saturate 0 으로 웜톤 중립화. */
+:root[data-variant="tradition"] body {
+  background-color: var(--bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-attachment: fixed;   /* 스크롤 무관 정적 텍스처 */
+}
+:root[data-variant="tradition"][data-theme="dark"] body {
+  /* 다크에서는 그레인을 살짝 밝게(screen 대신 opacity만) — 위 데이터URI 그대로, 배경만 어둠 */
+}
+
+/* ═══ ③ 벤토 그리드 — .works-grid 를 auto-rows 벤토로 오버라이드 ═══
+   dillionverma auto-rows-fr + bchiang7 겹침 그리드를 벤토 셀로 각색.
+   Work 섹션 컴포넌트가 .works-grid 안에 .card 들을 두고, 대표작에
+   .is-featured 또는 [data-featured] 를 붙이면 2×2 셀로 확장된다. */
+:root[data-variant="tradition"] .works-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: minmax(180px, auto);
+  gap: clamp(12px, 1.6vw, 20px);
+}
+:root[data-variant="tradition"] .works-grid > * {
+  grid-column: span 3;          /* 기본 셀 = 6칼럼 중 3 (2열) */
+}
+:root[data-variant="tradition"] .works-grid > .is-featured,
+:root[data-variant="tradition"] .works-grid > [data-featured] {
+  grid-column: span 4;          /* 대표작 = 4칼럼 폭 */
+  grid-row: span 2;             /* 2행 높이 (2× 벤토 셀) */
+}
+/* 태블릿 이하 — 2열, 대표작만 전폭 */
+@media (max-width: 900px) {
+  :root[data-variant="tradition"] .works-grid { grid-template-columns: repeat(2, 1fr); }
+  :root[data-variant="tradition"] .works-grid > * { grid-column: span 1; }
+  :root[data-variant="tradition"] .works-grid > .is-featured,
+  :root[data-variant="tradition"] .works-grid > [data-featured] { grid-column: span 2; grid-row: span 1; }
+}
+/* 모바일 — 단일 열 */
+@media (max-width: 560px) {
+  :root[data-variant="tradition"] .works-grid { grid-template-columns: 1fr; }
+  :root[data-variant="tradition"] .works-grid > *,
+  :root[data-variant="tradition"] .works-grid > .is-featured,
+  :root[data-variant="tradition"] .works-grid > [data-featured] { grid-column: 1 / -1; }
+}
+
+/* ═══ ④ 벤토 카드 hover 리프트 — bchiang7 하드 오프셋 그림자 ═══ */
+:root[data-variant="tradition"] .card {
+  border-radius: 2px;
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s var(--ease);
+}
+:root[data-variant="tradition"] .card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0 var(--accent-tint);
+  border-color: var(--accent);
+}
+
+/* ═══ ⑤ 나전 shimmer — 그라디언트 background-position 애니 (rAF 아님, 순 CSS) ═══
+   (a) 타이틀 bg-clip-text : .najeon-text
+   (b) 대표 셀 테두리      : padding-box(면) + border-box(나전) 이중 배경 */
+@keyframes pf-najeon-shift { to { background-position: 200% 50%; } }
+
+:root[data-variant="tradition"] .najeon-text {
+  background: var(--pf-najeon);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: pf-najeon-shift 6s linear infinite;
+}
+
+/* 나전 테두리 — 대표 셀 + 명시적 .card--najeon 훅 */
+:root[data-variant="tradition"] .works-grid > .is-featured,
+:root[data-variant="tradition"] .works-grid > [data-featured],
+:root[data-variant="tradition"] .card--najeon {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--pf-najeon) border-box;
+  background-size: auto, 220% 220%;
+  background-position: 0 0, 0 50%;
+  animation: pf-najeon-border 7s linear infinite;
+}
+@keyframes pf-najeon-border { to { background-position: 0 0, 220% 50%; } }
+/* 대표 셀 hover 시 골드 오프셋 그림자는 유지하되 테두리색 덮어쓰기 방지 */
+:root[data-variant="tradition"] .works-grid > .is-featured:hover,
+:root[data-variant="tradition"] .works-grid > [data-featured]:hover {
+  border-color: transparent;
+}
+
+/* ═══ ⑥ 듀오톤 이미지 훅 — grayscale + multiply + 오프셋 프레임 (bchiang7) ═══
+   주의: mix-blend 는 뒤 solid 표면 전제. .duotone 래퍼가 골드 배경을 깔아 성립. */
+:root[data-variant="tradition"] .duotone {
+  position: relative;
+  background: var(--accent);
+}
+:root[data-variant="tradition"] .duotone img,
+:root[data-variant="tradition"] img.duotone {
+  filter: grayscale(1) contrast(1.06);
+  mix-blend-mode: multiply;
+  transition: filter .4s var(--ease);
+}
+:root[data-variant="tradition"] .duotone:hover img,
+:root[data-variant="tradition"] img.duotone:hover {
+  filter: grayscale(0) contrast(1);
+  mix-blend-mode: normal;
+}
+/* 오프셋 테두리 프레임 유틸 */
+:root[data-variant="tradition"] .frame-offset { position: relative; }
+:root[data-variant="tradition"] .frame-offset::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translate(12px, 12px);
+  border: 1px solid var(--accent);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ═══ ⑦ 섹션 헤더 오너먼트 — 그라디언트 h-px + 중앙 pill 라벨 (dillionverma) ═══ */
+:root[data-variant="tradition"] .sec-orn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--accent);
+}
+:root[data-variant="tradition"] .sec-orn::before,
+:root[data-variant="tradition"] .sec-orn::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+/* ═══ ⑧ reduced-motion — shimmer 정지, 그라디언트는 정적으로 보임 유지 ═══
+   (base.css 전역 게이트가 duration 을 0.01ms 로 캡하지만, 여기서 명시적으로 끊어
+    끝프레임 고정이 아닌 '초기 위치 정지' 상태를 보장한다.) */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-variant="tradition"] .najeon-text,
+  :root[data-variant="tradition"] .works-grid > .is-featured,
+  :root[data-variant="tradition"] .works-grid > [data-featured],
+  :root[data-variant="tradition"] .card--najeon {
+    animation: none !important;
+  }
+}

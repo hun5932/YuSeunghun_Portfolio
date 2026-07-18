@@ -1,0 +1,50 @@
+---
+// 404.astro — 정적 Not Found. GitHub Pages 가 미매칭 경로에서 자동 서빙한다.
+// ko/en 병기 · 홈 복귀 링크는 withBase 경유(base 누락 방지).
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { withBase } from '../lib/url';
+
+const locale = 'ko' as const;
+---
+
+<BaseLayout locale={locale} title="404 — Yu Seunghun" description="페이지를 찾을 수 없습니다 / Page not found" alternate={false}>
+  <section class="sec nf">
+    <div class="wrap nf-in">
+      <span class="k reveal">Error 404</span>
+      <h1 class="d1 reveal" style="margin-top:1rem;">
+        길을 잃은 고리
+        <span class="gloss" style="display:block;margin-top:14px;font-size:var(--fz-lg);">A loop that lost its way</span>
+      </h1>
+      <p class="reveal" style="margin-top:1.25rem;max-width:52ch;color:var(--ink-2);font-size:var(--fz-lg);">
+        요청하신 페이지가 없습니다. 주소가 바뀌었거나 삭제되었을 수 있어요.<br />
+        This page does not exist — the address may have changed or been removed.
+      </p>
+
+      <div class="nf-links reveal" style="margin-top:2rem;">
+        <a class="nf-link" href={withBase('/')}>
+          <span aria-hidden="true">←</span> 메인으로 / Home
+        </a>
+        <a class="nf-link" href={withBase('/en/')}>English home</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .nf { padding-block: clamp(120px, 20vh, 220px); }
+  .nf-links { display: flex; flex-wrap: wrap; gap: 12px 22px; }
+  .nf-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: 500 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .nf-link:hover { color: var(--accent); border-color: var(--accent); }
+</style>

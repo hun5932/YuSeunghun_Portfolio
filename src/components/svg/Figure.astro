@@ -1,0 +1,38 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Figure.astro — 프로젝트 figure 디스패처
+//   content.config projects.figure(슬러그) 또는 projects.key 로 7종 도판 중 하나 선택.
+//   섹션 작성자는 <Figure slug={p.data.figure ?? p.data.key} /> 형태로 호출.
+//   미매칭 슬러그는 TRIH 이상한 고리(FigTrih)로 폴백.
+// ═══════════════════════════════════════════════════════════════════════════
+import FigJiksats from './FigJiksats.astro';
+import FigAiperso from './FigAiperso.astro';
+import FigTrih from './FigTrih.astro';
+import FigCetana from './FigCetana.astro';
+import FigHobbybuddy from './FigHobbybuddy.astro';
+import FigSeunghunOs from './FigSeunghunOs.astro';
+import FigInfraLab from './FigInfraLab.astro';
+
+interface Props { slug: string; class?: string }
+const { slug, class: className = '' } = Astro.props;
+
+// 슬러그/키 → 컴포넌트 (하이픈·이형 표기 모두 정규화)
+const norm = slug.toLowerCase().replace(/[_\s]/g, '-');
+const MAP: Record<string, any> = {
+  jiksats: FigJiksats,
+  aiperso: FigAiperso,
+  'ai-perso': FigAiperso,
+  trih: FigTrih,
+  geb: FigTrih,
+  thesis: FigTrih,
+  cetana: FigCetana,
+  hobbybuddy: FigHobbybuddy,
+  'hobby-buddy': FigHobbybuddy,
+  'seunghun-os': FigSeunghunOs,
+  seunghunos: FigSeunghunOs,
+  'infra-lab': FigInfraLab,
+  infralab: FigInfraLab,
+};
+const Comp = MAP[norm] ?? FigTrih;
+---
+<Comp class={className} />

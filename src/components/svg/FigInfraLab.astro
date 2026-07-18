@@ -1,0 +1,35 @@
+---
+// FigInfraLab.astro — 프로젝트 figure: Infra Lab (3계층 아키텍처: LB→WAS×2→DB)
+//   출처 패턴: _reference/index_v2_live.html L1144-1163. 색 전량 토큰화, aria-hidden.
+//   ※ 'downtime 1.2s → 0s · measured' 은 facts.json INF-01 값과 일치(SSOT 정합).
+interface Props { class?: string }
+const { class: className = '' } = Astro.props;
+const uid = 'fi-' + Math.random().toString(36).slice(2, 8);
+---
+<svg viewBox="0 0 400 300" class={`pf-fig ${className}`} aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <pattern id={`${uid}-grid`} width="28" height="28" patternUnits="userSpaceOnUse">
+      <rect width="28" height="28" fill="none" stroke="var(--accent)" stroke-width="0.35" opacity="0.35" />
+    </pattern>
+  </defs>
+  <rect width="400" height="300" fill="var(--surface)" />
+  <rect width="400" height="300" fill={`url(#${uid}-grid)`} />
+  {/* 3계층: LB → WAS×2 → DB */}
+  <g style="font-family:var(--font-mono)" font-size="9">
+    <rect x="160" y="35" width="80" height="30" rx="4" fill="none" stroke="var(--accent)" stroke-width="1.5" />
+    <text x="200" y="54" text-anchor="middle" fill="var(--accent)">NGINX LB</text>
+    <rect x="80" y="115" width="80" height="30" rx="4" fill="none" stroke="var(--violet, #6b5cc4)" stroke-width="1.2" />
+    <text x="120" y="134" text-anchor="middle" fill="var(--violet, #6b5cc4)">WAS #1</text>
+    <rect x="240" y="115" width="80" height="30" rx="4" fill="none" stroke="var(--violet, #6b5cc4)" stroke-width="1.2" />
+    <text x="280" y="134" text-anchor="middle" fill="var(--violet, #6b5cc4)">WAS #2</text>
+    <rect x="160" y="195" width="80" height="30" rx="4" fill="none" stroke="var(--accent)" stroke-width="1.2" />
+    <text x="200" y="214" text-anchor="middle" fill="var(--accent)">MySQL</text>
+    <g stroke="var(--accent)" stroke-width="0.8" opacity="0.6" fill="none">
+      <path d="M 185,65 L 130,115" /><path d="M 215,65 L 270,115" />
+      <path d="M 130,145 L 185,195" /><path d="M 270,145 L 215,195" />
+    </g>
+  </g>
+  <text x="20" y="285" fill="var(--accent)" font-size="9" opacity="0.6"
+        style="font-family:var(--font-mono);letter-spacing:2px">downtime&nbsp;1.2s&nbsp;→&nbsp;0s&nbsp;·&nbsp;measured</text>
+</svg>
+<style>.pf-fig{display:block;width:100%;height:100%}</style>

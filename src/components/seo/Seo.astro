@@ -1,0 +1,164 @@
+---
+// ─────────────────────────────────────────────────────────────
+// Seo.astro — <head> 메타 단일 소스.
+// title/description/canonical/OG/Twitter/JSON-LD를 한 곳에서 방출한다.
+// BaseLayout <head> 안에서 <Seo {...} /> 로 호출한다 (자체 <head> 렌더 아님).
+//
+// URL 규칙: 모든 절대 URL은 Astro.site + base 를 경유한다.
+//   - canonical/og:url : 현재 페이지 (Astro.url.pathname, 이미 base 포함)
+//   - og:image         : withBase() → new URL(_, Astro.site) 로 절대화
+// JSON-LD: 기본 Person(항상). schema='scholarly' | 'both' 이면
+//   ScholarlyArticle 를 추가 방출 (/research 논문 상세용).
+// ─────────────────────────────────────────────────────────────
+import facts from '../../data/facts.json';
+import { withBase, splitLocale, localeHref } from '../../lib/url';
+
+type Locale = 'ko' | 'en';
+
+/** /research 논문 상세에서 넘기는 ScholarlyArticle 필드 (선택) */
+export interface ScholarlyArticleInput {
+  headline: string;
+  datePublished?: string; // ISO (예: '2026-06')
+  doi?: string; // '10.5281/zenodo.21006608'
+  url?: string; // 정식 게시 URL (Zenodo 등)
+  abstract?: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  locale?: Locale;
+  /** OG image 경로 (base 없이, 예: '/og/og-default.png'). 기본 = 브랜드 OG(PNG — 소셜 스크레이퍼 호환) */
+  image?: string;
+  ogType?: 'website' | 'article' | 'profile';
+  /** JSON-LD 스위치: 기본 person. scholarly/both 는 /research 논문 페이지용 */
+  schema?: 'person' | 'scholarly' | 'both';
+  /** schema 에 scholarly 포함 시 필수 */
+  article?: ScholarlyArticleInput;
+  /** true 면 <meta name="robots" content="noindex"> 방출 (preview 등 색인 제외 페이지) */
+  noindex?: boolean;
+  /** ko/en hreflang alternate 방출 여부. en 대응이 없는 페이지(preview·404)는 false */
+  alternate?: boolean;
+}
+
+const {
+  title,
+  description,
+  locale = 'ko',
+  image = '/og/og-default.png',
+  ogType = 'website',
+  schema = 'person',
+  article,
+  noindex = false,
+  alternate = true,
+} = Astro.props;
+
+// ── 절대 URL 계산 (Astro.site 는 astro.config.mjs 의 site 값) ──
+const site = Astro.site!; // 'https://hun5932.github.io'
+// 트레일링 슬래시 정규화 — @astrojs/sitemap(directory 포맷)은 항상 슬래시로 끝나므로
+// canonical·hreflang 도 슬래시로 통일해야 sitemap 과 불일치가 없다(M5).
+const withSlash = (u: string): string => (u.endsWith('/') ? u : `${u}/`);
+// canonical = 현재 페이지의 절대 URL (Astro.url.pathname 은 base 포함) + 트레일링 슬래시
+const canonical = withSlash(new URL(Astro.url.pathname, site).href);
+const ogImage = new URL(withBase(image), site).href;
+const ogLocale = locale === 'ko' ? 'ko_KR' : 'en_US';
+
+// ── hreflang alternate (ko/en/x-default) ──
+// 현재 경로에서 로케일을 벗겨 순수 경로를 얻고 ko/en 절대 URL 을 각각 재조립.
+// x-default = 기본 로케일(ko). en 대응이 없는 페이지는 alternate=false 로 통째 생략.
+const { path: purePath } = splitLocale(Astro.url.pathname);
+const koHref = withSlash(new URL(localeHref('ko', purePath), site).href);
+const enHref = withSlash(new URL(localeHref('en', purePath), site).href);
+
+const { name, headline, links, orcid } = facts.profile;
+const fullName = locale === 'ko' ? name.ko : name.en;
+
+// ── JSON-LD: Person (항상 방출) ──
+// sameAs = 신원 연결 그래프 (구글 지식 패널·학술 신원 정합)
+const personLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: `${name.ko} (${name.en})`,
+  alternateName: name.en,
+  jobTitle: 'AI Service Planner',
+  description: locale === 'ko' ? headline.ko : headline.en,
+  url: new URL(withBase('/'), site).href,
+  email: `mailto:${facts.profile.email_academic}`,
+  sameAs: [
+    links.github,
+    links.zenodo,
+    links.osf,
+    `https://orcid.org/${orcid}`,
+    links.photo500px,
+    links.videoJikjisa1,
+  ],
+};
+
+// ── JSON-LD: ScholarlyArticle (schema 에 scholarly 포함 시) ──
+const wantScholarly = schema === 'scholarly' || schema === 'both';
+const articleLd = wantScholarly
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'ScholarlyArticle',
+      headline: article?.headline ?? title,
+      name: article?.headline ?? title,
+      inLanguage: locale,
+      ...(article?.abstract ? { abstract: article.abstract } : {}),
+      ...(article?.datePublished ? { datePublished: article.datePublished } : {}),
+      ...(article?.url ? { url: article.url } : { url: canonical }),
+      ...(article?.doi
+        ? {
+            identifier: { '@type': 'PropertyValue', propertyID: 'DOI', value: article.doi },
+            sameAs: `https://doi.org/${article.doi}`,
+          }
+        : {}),
+      author: {
+        '@type': 'Person',
+        name: `${name.ko} (${name.en})`,
+        url: `https://orcid.org/${orcid}`,
+      },
+    }
+  : null;
+
+// schema='scholarly' 여도 Person 은 유지 (author 신원 강화). both 와 동일 동작.
+const jsonLdBlocks = [personLd, ...(articleLd ? [articleLd] : [])];
+---
+
+{/* ── 기본 메타 ── */}
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<meta name="author" content={fullName} />
+{noindex && <meta name="robots" content="noindex" />}
+
+{/* ── hreflang alternate (ko ↔ en, x-default=ko) — en 대응 페이지에서만 ── */}
+{alternate && (
+  <>
+    <link rel="alternate" hreflang="ko" href={koHref} />
+    <link rel="alternate" hreflang="en" href={enHref} />
+    <link rel="alternate" hreflang="x-default" href={koHref} />
+  </>
+)}
+
+{/* ── Open Graph ── */}
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={locale === 'ko' ? name.ko + ' 포트폴리오' : name.en + ' portfolio'} />
+<meta property="og:site_name" content={`${name.ko} · ${name.en}`} />
+<meta property="og:locale" content={ogLocale} />
+
+{/* ── Twitter Card ── */}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+
+{/* ── JSON-LD (Person + 선택 ScholarlyArticle) ── */}
+{jsonLdBlocks.map((block) => (
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(block)} />
+))}

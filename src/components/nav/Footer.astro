@@ -1,0 +1,44 @@
+---
+// Footer.astro — 공통 푸터. 저작권 · 자체제작 고지 · 처음으로.
+import { t, type Locale } from '../../i18n/ui';
+import facts from '../../data/facts.json';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+const name = facts.profile.name[locale];
+const year = new Date().getFullYear();
+const gh = facts.profile.links.github;
+---
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <!-- ko: 한글+로마자 병기(성-이름 어순 일치) 유지 / en: 로마자 단독('Seunghun Yu' SSOT) — 이름 중복·어순 모순 제거 -->
+    <span>© {year} {locale === 'ko' ? `${name} · Yu Seunghun` : name}</span>
+    <span>{t(locale, 'footer.rights')}</span>
+    <span class="foot-links">
+      <a href={gh} target="_blank" rel="noopener">GitHub</a>
+      <a href="#main">↑ Top</a>
+    </span>
+  </div>
+</footer>
+
+<style>
+  .foot {
+    border-top: 1px solid var(--border);
+    padding: 34px 0 44px;
+  }
+  .foot-in {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px 28px;
+    flex-wrap: wrap;
+    font: 400 var(--fz-xxs) / 1.8 var(--font-mono);
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+  }
+  .foot-links { display: inline-flex; gap: 18px; }
+  .foot-in a { transition: color var(--dur) var(--ease); }
+  .foot-in a:hover { color: var(--accent); }
+</style>

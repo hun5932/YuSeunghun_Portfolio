@@ -1,0 +1,40 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Home.astro — 홈 단일 페이지의 섹션 조립 (DRY 단일 진실원)
+//   index.astro(ko) · en/index.astro(en) · preview/[variant].astro 가 공유한다.
+//   섹션 순서: Hero → MarqueeBand → Philosophy → Projects → FeaturedResearch
+//             → Simulator(ROI) → Capabilities → Timeline → Resume → TrackBridge → Contact
+//   (철학→작업→연구→견적→역량→이력 서사. Capabilities 는 이력 위.)
+//   · locale prop 만 받아 각 섹션에 전달 (variant 는 BaseLayout data-variant 가 처리).
+//   · Measured / Approach / 인라인 TRIH figure 블록은 v4 재편에서 제거(참조만 삭제,
+//     Measured.astro 파일 자체는 잔존해도 무방).
+// ═══════════════════════════════════════════════════════════════════════════
+import Hero from './sections/Hero.astro';
+import MarqueeBand from './sections/MarqueeBand.astro';
+import Philosophy from './sections/Philosophy.astro';
+import Capabilities from './sections/Capabilities.astro';
+import FeaturedResearch from './sections/FeaturedResearch.astro';
+import Projects from './sections/Projects.astro';
+import Simulator from './sections/Simulator.astro';
+import Timeline from './sections/Timeline.astro';
+import Resume from './sections/Resume.astro';
+import TrackBridge from './sections/TrackBridge.astro';
+import Contact from './sections/Contact.astro';
+import type { Locale } from '../i18n/ui';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+---
+
+<Hero locale={locale} />
+<!-- v2evolved 시안에서만 표시(CSS 게이트). .sec 병기로 인접 border 연쇄 보존. -->
+<MarqueeBand locale={locale} />
+<Philosophy locale={locale} />
+<Projects locale={locale} />
+<FeaturedResearch locale={locale} />
+<Simulator locale={locale} />
+<Capabilities locale={locale} />
+<Timeline locale={locale} />
+<Resume locale={locale} />
+<TrackBridge locale={locale} />
+<Contact locale={locale} />

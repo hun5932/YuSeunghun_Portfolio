@@ -1,0 +1,16 @@
+---
+// en/index.astro — English home (prefixDefaultLocale:false → '/en/').
+// 섹션 조립은 Home 컴포넌트가 담당(DRY) — index(ko) 와 공유, locale='en' 만 전달.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Home from '../../components/Home.astro';
+import facts from '../../data/facts.json';
+
+const locale = 'en' as const;
+const title = `${facts.profile.name.en} — ${facts.profile.headline.en}`;
+const description =
+  'AI service planner · financial-cloud operator · TRIH researcher. One way of thinking — from reduction through self-reference to emergence — across four domains.';
+---
+
+<BaseLayout locale={locale} title={title} description={description}>
+  <Home locale={locale} />
+</BaseLayout>

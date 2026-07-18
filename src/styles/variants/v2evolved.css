@@ -1,0 +1,381 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   v2evolved.css — 시안「v2 에볼브드」 (기존 라이브 v2 디자인의 계승 + 업그레이드)
+   ───────────────────────────────────────────────────────────────────────────
+   원본: _reference/index_v2_live.html (Tailwind CDN 정적 v2)
+   철학: 한지(#FAF7F2) + 옻칠골드(#806832) 단일 정체성 위에, v2 의 시그니처 장식
+        (대형 200웨이트 명조 · text-gradient · 회전 strange-loop · 마퀴 · 한지 노이즈 ·
+         domain-card 리프트 · node pulse)을 그대로 이식하고, v2 엔 없던 요소
+        (다크 폴백 · 리빌 리듬 정제 · 나전 shimmer · CTA 대비 강화)로 진화시킨다.
+
+   ▚ 격리 계약 ▚ 모든 규칙은 [data-variant="v2evolved"] 스코프에 못박아 다른 4시안
+        (minimal/tradition/selfref/classic)에 영향 0. tokens.css 가 요구하는 원천
+        --pf-* 만 재정의(시맨틱 매핑 불변). 장식 셀렉터는 시안 전용(계약 밖 자유).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ① 라이트(기본) 원천 토큰 — 한지 + 옻칠골드 + 나전보라
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="v2evolved"] {
+  /* ⓪ ink-3 다크닝 — QA 대비 지적(카드/타임라인/스탯 서브라벨) 방어. 한지·표면 위 AA 여유 확보. */
+  /* 표면 (한지) */
+  --pf-bg:          #FAF7F2;  /* 페이지 배경 — 한지 */
+  --pf-surface:     #F3EDE0;  /* 패널 */
+  --pf-surface-2:   #EBE4D4;  /* 카드·승격 표면 */
+  --pf-border:      #D8CFB8;  /* 헤어라인 */
+  --pf-border-soft: #E6DECB;  /* 옅은 구분선 */
+
+  /* 잉크 (먹) */
+  --pf-ink:         #1A1612;  /* 본문 기본 */
+  --pf-ink-2:       #2A2620;  /* 보조 */
+  --pf-ink-3:       #3E3A32;  /* 뮤트 — 한지·카드표면 위 AA 여유(구 #4A4640 대비 다크닝) */
+
+  /* 액센트 (옻칠골드) */
+  --pf-accent:      #806832;  /* 메인 골드 */
+  --pf-accent-2:    #A98A3F;  /* 밝은/hover */
+  --pf-accent-tint: rgba(128, 104, 50, 0.10);
+  --pf-on-accent:   #FAF7F2;
+  --pf-accent-text: #6B5429;  /* 소형 텍스트(.k) 전용 진한 골드 — 한지 위 AA 통과 */
+
+  /* 계측 수치 전용 (옻 red) */
+  --pf-measure:     #8A2E20;
+
+  /* 서체 — v2 대형 200웨이트 명조가 시그니처 핵심(BaseLayout 조건 로드로 웹폰트 공급) */
+  --pf-font-display:    "Noto Serif KR", "Nanum Myeongjo", ui-serif, Georgia, serif;
+  --pf-font-display-en: "Playfair Display", "Bodoni Moda", ui-serif, Georgia, "Times New Roman", serif;
+  --pf-font-body:       "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pf-font-mono:       "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Code", Menlo, Consolas, monospace;
+
+  /* ─── 시안 전용 장식 토큰 (계약 밖) ─── */
+  --pf-loop:        #4A3D96;  /* 나전보라 (자기참조) */
+  --pf-loop-light:  #7C6BD1;  /* 밝은 보라 */
+  --pf-grad:        linear-gradient(135deg, #806832 0%, #6B5429 50%, #4A3D96 100%);
+  --pf-grid:        rgba(128, 104, 50, 0.07);   /* 40px 골드 그리드 라인 */
+  --pf-pulse:       rgba(128, 104, 50, 0.6);    /* 노드 펄스 */
+  --pf-card-shadow: 0 20px 40px -12px rgba(26, 22, 18, 0.18), 0 4px 12px rgba(128, 104, 50, 0.08);
+
+  /* TrihDiagram(공유 컴포넌트)의 var(--violet) 훅을 나전보라로 결선 — 이 시안에서만 */
+  --violet: var(--pf-loop);
+
+  /* html(루트) 자체에 한지색을 깔아 body::before 노이즈층(z-index:-1)이 그 위에 얹힌다 */
+  background-color: var(--pf-bg);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ② 다크 폴백 — v2 엔 없던 업그레이드 (야간 먹/한지, 밝은 금 + 밝은 보라)
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="v2evolved"][data-theme="dark"] {
+  --pf-bg:          #14120E;
+  --pf-surface:     #1C1A14;
+  --pf-surface-2:   #26221A;
+  --pf-border:      #3A3428;
+  --pf-border-soft: #2B2620;
+
+  --pf-ink:         #F3EFE6;
+  --pf-ink-2:       #C9C2B2;
+  --pf-ink-3:       #948C7B;
+
+  --pf-accent:      #C9A24B;
+  --pf-accent-2:    #E0BE6A;
+  --pf-accent-tint: rgba(201, 162, 75, 0.12);
+  --pf-on-accent:   #14120E;
+  --pf-accent-text: var(--pf-accent);  /* 다크에선 밝은 금이 이미 대비 통과 → 라이트값 상속 차단 */
+
+  --pf-measure:     #E4715C;
+
+  --pf-loop:        #7C6BD1;
+  --pf-loop-light:  #9A8BE0;
+  --pf-grad:        linear-gradient(135deg, #C9A24B 0%, #A98A3F 45%, #7C6BD1 100%);
+  --pf-grid:        rgba(201, 162, 75, 0.06);
+  --pf-pulse:       rgba(201, 162, 75, 0.55);
+  --pf-card-shadow: 0 20px 44px -14px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(201, 162, 75, 0.08);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ③ 한지 노이즈 질감 — 정적 SVG feTurbulence data-URI (baseFrequency .85)
+      루트 뒤(z-index:-1) 고정층에 multiply 로 얹혀 한지 결을 만든다. body 배경은
+      투명으로 비워 루트 한지색 + 노이즈가 함께 비친다(콘텐츠 가림 없음).
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="v2evolved"] body { background: transparent; }
+:root[data-variant="v2evolved"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity: 0.045;
+  mix-blend-mode: multiply;
+}
+:root[data-variant="v2evolved"][data-theme="dark"] body::before {
+  mix-blend-mode: screen;   /* 어두운 배경에선 결을 밝게 얹어야 보인다 */
+  opacity: 0.035;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ④ 섹션 장식용 골드 그리드 훅 (40px 라인) — .bg-grid 를 부여한 요소에 결선
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="v2evolved"] .bg-grid {
+  background-image:
+    linear-gradient(to right, var(--pf-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--pf-grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑤ 대형 명조 디스플레이 — v2 display-ko 재현 (200웨이트 대비 900)
+      + text-gradient(옻→깊은옻→나전보라). 한글 합성 이탤릭 금지(font-synthesis:none).
+      강조는 '무게 + 그라디언트'로만. (.d1 em/.d2 em 은 아래 나전 shimmer 와 공유)
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="v2evolved"] .d1 {
+  font-weight: 200;
+  letter-spacing: -0.035em;
+  font-synthesis: none;
+}
+:root[data-variant="v2evolved"] .d1 strong { font-weight: 900; letter-spacing: -0.02em; }
+:root[data-variant="v2evolved"] .d2 strong { font-weight: 900; }
+
+/* v2 text-gradient — 강조 어절(em)에 옻→보라 그라디언트. 색 대체이므로 대비 안전 위해
+   본문 큰 글자에만(디스플레이 스코프). 아래 ⑫ 에서 아주 느린 나전 shimmer 로 진화. */
+:root[data-variant="v2evolved"] .d1 em,
+:root[data-variant="v2evolved"] .d2 em {
+  font-style: normal;
+  font-weight: 700;
+  background: var(--pf-grad);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  font-synthesis: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑥ domain-card — v2 카드 라운드 + hover 리프트(그림자·골드 보더)
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="v2evolved"] .card {
+  border-radius: 16px;
+  transition: transform 0.5s var(--ease-expo), box-shadow 0.5s var(--ease-expo),
+              border-color 0.5s var(--ease-expo);
+}
+:root[data-variant="v2evolved"] .card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(128, 104, 50, 0.6);
+  box-shadow: var(--pf-card-shadow);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑦ CTA 대비 강화 — 골드 그림자(v2 shadow-ott/20) + hover 상승 (업그레이드)
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="v2evolved"] .btn-primary {
+  box-shadow: 0 10px 24px -8px rgba(128, 104, 50, 0.45);
+  font-weight: 700;
+}
+:root[data-variant="v2evolved"] .btn-primary:hover {
+  box-shadow: 0 16px 32px -8px rgba(128, 104, 50, 0.55);
+}
+:root[data-variant="v2evolved"][data-theme="dark"] .btn-primary {
+  box-shadow: 0 10px 26px -8px rgba(0, 0, 0, 0.5);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑧ (제거됨) 히어로 회전 strange-loop 훅 — 구 .hero-figure .loop-nest/.loop-ring 은
+      현 4장 로테이터(FigDrosteV2/FigOrbit/FigLoop/FigDroste — 각자 자체 애니+크로스페이드,
+      Hero.astro 소유)에 존재하지 않던 죽은 셀렉터였다. 회전/전환을 Hero 가 자체 담당하므로
+      시안 레벨 회전 훅·v2e-spin 키프레임·인접 max-width 캡(로테이터 420px 제약에 이미 흡수)
+      모두 삭제. (reduced-motion ⑭·print ⑮ 의 loop-nest/loop-ring 참조도 함께 제거.)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑨ 노드 펄스 — v2 nodePulse 키프레임 + .node-pulse 훅 (다이어그램 노드 강조용)
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="v2evolved"] .node-pulse {
+  border-radius: 50%;
+  animation: v2e-node-pulse 2.4s infinite;
+}
+@keyframes v2e-node-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--pf-pulse); }
+  70%  { box-shadow: 0 0 0 12px rgba(128, 104, 50, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(128, 104, 50, 0); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑩ 마퀴 밴드 — v2 도메인 태그 무한 마퀴. 트랙 애니 키프레임(50s translateX -50%).
+      표시 게이트/구조는 MarqueeBand.astro 가 담당(CSS 게이트). 여기선 키프레임 공급.
+   ───────────────────────────────────────────────────────────────────────── */
+@keyframes v2e-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑪ 리빌 리듬 정제 — v2 (translateY 28px · ~1.1s expo) 계승, 살짝 정제 (업그레이드)
+      minimal 의 clip-path 마스크와 달리 v2 톤(부드러운 페이드+상승)을 유지.
+   ───────────────────────────────────────────────────────────────────────── */
+html.js[data-variant="v2evolved"] .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  clip-path: none;                 /* 혹시 모를 상속 방지(minimal 마스크와 격리) */
+  /* 상시 will-change 제거 — one-shot 등장이라 상주 합성 레이어 불필요(스크롤 부담 완화). */
+}
+html.js[data-variant="v2evolved"] .reveal.is-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 1.05s var(--ease-expo), transform 1.05s var(--ease-expo);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html.js[data-variant="v2evolved"] .reveal {
+      animation: v2e-reveal linear both;
+      animation-timeline: view();
+      /* 스태거를 animation-range 시작 오프셋으로 인코딩(scroll-driven 은 시간값 delay 무시) —
+         --i(인라인/IO 세팅, 0~4)당 3% 지연. base 의 --i*55ms 는 IO 폴백 전용. */
+      animation-range: entry calc(4% + var(--i, 0) * 3%) cover 24%;
+    }
+  }
+}
+@keyframes v2e-reveal {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑫ 나전 shimmer — 보라 그라디언트 은은한 애니 (과하지 않게 1-2곳)
+      (a) 디스플레이 강조 어절(.d1 em/.d2 em) — 옻→보라 그라디언트가 아주 느리게 흐름
+      (b) .najeon 훅 — 필요 곳에 붙이는 보라 shimmer 텍스트
+   ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-variant="v2evolved"] .d1 em,
+  :root[data-variant="v2evolved"] .d2 em {
+    animation: v2e-najeon 9s ease-in-out infinite alternate;
+  }
+}
+:root[data-variant="v2evolved"] .najeon {
+  background: linear-gradient(115deg, #806832 0%, #7C6BD1 42%, #4A3D96 62%, #806832 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-variant="v2evolved"] .najeon {
+    animation: v2e-najeon 7s linear infinite;
+  }
+}
+@keyframes v2e-najeon { to { background-position: 220% 50%; } }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑭ reduced-motion — 마퀴·펄스·회전·shimmer 정지(정적 상태로 안전 표시)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-variant="v2evolved"] .node-pulse,
+  :root[data-variant="v2evolved"] .marquee-track,
+  :root[data-variant="v2evolved"] .d1 em,
+  :root[data-variant="v2evolved"] .d2 em,
+  :root[data-variant="v2evolved"] .najeon {
+    animation: none !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⑮ print — 장식(노이즈·그리드·그림자·회전) 제거, 잉크 절약
+   ───────────────────────────────────────────────────────────────────────── */
+@media print {
+  :root[data-variant="v2evolved"] body::before { display: none !important; }
+  :root[data-variant="v2evolved"] .bg-grid { background-image: none !important; }
+  :root[data-variant="v2evolved"] .card { box-shadow: none !important; }
+  :root[data-variant="v2evolved"] .node-pulse,
+  :root[data-variant="v2evolved"] .marquee-track,
+  :root[data-variant="v2evolved"] .d1 em,
+  :root[data-variant="v2evolved"] .d2 em,
+  :root[data-variant="v2evolved"] .najeon { animation: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⑯ QA CRITICAL 대응 — v2evolved 전용(스코프 격리). 모든 규칙 [data-variant="v2evolved"].
+      base/토큰 계약·다른 4시안에 영향 0 (셀렉터 프리픽스로 못박음).
+   ─────────────────────────────────────────────────────────────────────────
+   (C) 프로젝트 카드 7색 액센트 팔레트 (라이브 .pj-*) — 썸네일 Figure 착색 + 상단 스트립 +
+       hover/featured/뱃지 카드 컬러.
+   (E) 실물·증거(evidence) 갤러리 톤 승격 (라이브 .pjm-ev-*) — 한지 프레임·골드 헤어라인 +
+       모달 tech 칩 4개 컷(구 카드 태그컷 이관).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── (C) 프로젝트 카드 7색 액센트 팔레트 — 라이브 .pj-* 클래스 재결선 ──────────────────
+   Projects.astro 라이브 카드(.pj-card / .pj-thumb / .pj-badge)에 카드별 --card-accent
+   팔레트를 얹는다. ⚠ 크롭 회귀 방지: .pj-thumb 는 컴포넌트가 이미 4:3 무크롭
+   (Projects.astro:383-391) — 구 .work-thumb 의 aspect-ratio:16/8·음수 margin·radius 는
+   이식하지 않는다(색 훅만 얹음). 텍스트엔 --card-accent 미적용(썸네일 착색·스트립·헤어라인·
+   대표 뱃지 배경만) → 한지 위 본문 대비 불변. */
+
+/* (1) 썸네일 Figure 착색 — Fig SVG 가 읽는 --accent/--violet 를 카드 액센트로 재결선.
+   .pj-thumb 박스(4:3·radius·배경·position:relative)는 컴포넌트 소유 → 색 훅만 추가. */
+:root[data-variant="v2evolved"] .pj-thumb {
+  --accent: var(--card-accent, var(--pf-accent));
+  --violet: var(--card-accent-2, var(--pf-loop));
+}
+/* (2) 썸네일 상단 3px 컬러 스트립 — 카드 정체성 컬러코딩(즉시 스캔). .pj-thumb 는 relative. */
+:root[data-variant="v2evolved"] .pj-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--card-accent, var(--accent));
+  z-index: 1;
+}
+
+/* (3) 카드 hover 보더·featured 상단 바·대표 뱃지 배경을 카드 컬러로. */
+:root[data-variant="v2evolved"] .pj-card:hover { border-color: var(--card-accent, var(--accent)); }
+:root[data-variant="v2evolved"] .pj-card.is-featured::before { background: var(--card-accent, var(--accent)); }
+:root[data-variant="v2evolved"] .pj-card .pj-badge {
+  background: var(--card-accent, var(--accent));
+  color: #FAF7F2;
+}
+
+/* (4) 7카드 × AA 통과(한지 표면 위 ≥4.5:1) 액센트 팔레트 — 기억성·스캔성.
+   nth-child 는 [hidden](필터) 카드도 DOM 순서로 세므로 색-매핑 안정(.pj-grid 자식은 전부 .pj-card). */
+:root[data-variant="v2evolved"] .pj-card:nth-child(1) { --card-accent: #9C4322; --card-accent-2: #C77A48; } /* terracotta */
+:root[data-variant="v2evolved"] .pj-card:nth-child(2) { --card-accent: #6E2E5B; --card-accent-2: #A85A8E; } /* plum */
+:root[data-variant="v2evolved"] .pj-card:nth-child(3) { --card-accent: #3A379B; --card-accent-2: #7C6BD1; } /* indigo/najeon */
+:root[data-variant="v2evolved"] .pj-card:nth-child(4) { --card-accent: #6B5429; --card-accent-2: #A98A3F; } /* ottchil gold */
+:root[data-variant="v2evolved"] .pj-card:nth-child(5) { --card-accent: #1F6F63; --card-accent-2: #4F9B8C; } /* teal */
+:root[data-variant="v2evolved"] .pj-card:nth-child(6) { --card-accent: #3A5568; --card-accent-2: #6A87A0; } /* slate */
+:root[data-variant="v2evolved"] .pj-card:nth-child(7) { --card-accent: #55621F; --card-accent-2: #8A9A45; } /* olive */
+
+/* ── (E) 실물·증거(evidence) 갤러리 톤 승격 — 라이브 모달 클래스(.pjm-ev-*) 재결선 ──────
+   Projects.astro 모달 evidence 프레임 기본형(--border-soft·10px·surface-2)을 이 시안에서만
+   옻칠골드 헤어라인·12px·한지 표면으로 승격(정체성 일치). 모달은 .pj-card 밖(형제)이라
+   --card-accent 가 닿지 않아 골드 토큰으로 직접 결선.
+   ⚠ 구 .evidence>summary/.ev-* 죽은 셀렉터 중 컴포넌트 <style>와 값이 겹치는 규칙
+   (figcaption·note·title 기본색·focus outline, --ink-*↔--pf-*·--accent↔--pf-accent 동치)은
+   죽은코드 정리로 제거하고, 골드 헤어라인 프레임 승격만 재결선. (<details>/summary 구조는
+   라이브 모달에 없어 관련 규칙 삭제.) */
+
+/* 이미지 프레임 — 한지 표면 + 골드 헤어라인 + 12px radius (구 --border-soft·10px 승격) */
+:root[data-variant="v2evolved"] .pjm-ev-frame {
+  background: var(--pf-surface);
+  border: 1px solid rgba(201, 162, 75, 0.32);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(250, 247, 242, 0.4);
+}
+
+/* 영상 썸네일 카드 — 골드 헤어라인 + 12px, hover 시 골드 보더(컴포넌트엔 없던 추가 톤) */
+:root[data-variant="v2evolved"] .pjm-ev-video-thumb {
+  background: var(--pf-surface);
+  border: 1px solid rgba(201, 162, 75, 0.32);
+  border-radius: 12px;
+  transition: border-color var(--dur) var(--ease);
+}
+:root[data-variant="v2evolved"] .pjm-ev-video:hover .pjm-ev-video-thumb {
+  border-color: var(--pf-accent);
+}
+/* hover 시 영상 제목을 진한 골드(--pf-accent-text)로 — 소형 모노 텍스트 AA 대비 확보 */
+:root[data-variant="v2evolved"] .pjm-ev-video:hover .pjm-ev-video-title {
+  color: var(--pf-accent-text);
+}
+
+/* 모달 tech 칩 상한은 컴포넌트가 단일 진실원(Projects.astro TECH_CAP=6 + 초과분 '+N' 칩).
+   과거 여기 있던 CSS 4개 컷 `.pjm-tech-item:nth-child(n+5){display:none}` 은 컴포넌트 캡 및
+   '+N' 잘림 신호와 충돌(5·6번째 칩은 물론 '+N' 칩 자체까지 은폐)해 제거함 — CSS 레벨 상한 없음. */
+

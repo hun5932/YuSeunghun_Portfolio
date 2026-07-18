@@ -1,0 +1,174 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Timeline.astro — 이력(id=timeline) · 지그재그(교차) 타임라인
+//   timeline 컬렉션 no순. CSS-only(JS 0 · 인쇄 안전).
+//   · 데스크톱: 중앙 수직선(.tl-list::before, left:50%) 기준 홀/짝 좌우 교차.
+//     노드 점은 항상 중앙선 위. 카드 텍스트는 각 변에서 중앙을 향해 미러 정렬.
+//   · 모바일(≤780px): 좌측 단일선 1열 폴백(모바일-퍼스트 기본값 → 데스크톱은 미디어쿼리).
+//   · period 는 ko/en 공통 숫자, en 로케일이면 periodEn 우선.
+//   · 전면 한지 라이트 단일 톤 — 시맨틱 토큰(--accent/--surface/--border 등)만 사용.
+// ═══════════════════════════════════════════════════════════════════════════
+import { getCollection } from 'astro:content';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+// 사전에 없는 섹션 카피는 컴포넌트 내 리터럴로 해결(ui.ts 불변 계약)
+const pick = (ko: string, en: string): string => (locale === 'en' ? en : ko);
+
+const items = (await getCollection('timeline')).sort((a, b) => a.data.no - b.data.no);
+
+// <time datetime> 파생 — 스키마 추가 없이 숫자 period 문자열 시작에서만 ISO 도출(로케일 무관).
+//   "YYYY.MM …" → "YYYY-MM" · "YYYY …" → "YYYY" · 개방형 범위는 시작 토큰만 사용.
+//   파싱 불가하면 undefined → Astro 가 datetime 속성 자체를 생략.
+const toDateTime = (p: string): string | undefined => {
+  const start = p.split(/[—–-]/)[0].trim();
+  const m = start.match(/^(\d{4})(?:\.(\d{1,2}))?/);
+  if (!m) return undefined;
+  return m[2] ? `${m[1]}-${m[2].padStart(2, '0')}` : m[1];
+};
+---
+
+<section id="timeline" class="sec timeline" aria-labelledby="timeline-title">
+  <div class="wrap">
+    <header class="tl-head reveal">
+      <span class="k">{t(locale, 'nav.timeline')}</span>
+      <h2 id="timeline-title" class="d2 tl-title">
+        {pick('고고미술사학에서 AI 메커니스틱 해석까지', 'From art history to AI mechanistic interpretability')}
+      </h2>
+    </header>
+
+    <ol class="tl-list">
+      {items.map((it, i) => {
+        const d = it.data;
+        const period = locale === 'en' && d.periodEn ? d.periodEn : d.period;
+        const dt = toDateTime(d.period); // datetime 은 표시 로케일과 무관하게 숫자 period 에서 파생
+        return (
+          <li class="tl-item reveal" style={`--i:${i % 5}`}>
+            <div class="tl-card">
+              <time class="tl-period mono" datetime={dt}>{period}</time>
+              <h3 class="tl-org">{d.org[locale]}</h3>
+              <p class="tl-role mono">{d.role[locale]}</p>
+              <p class="tl-summary">{d.summary[locale]}</p>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  </div>
+</section>
+
+<style>
+  /* 옅은 톤 밴드 — FeaturedResearch 와 교대 배치 (Resume 와 연속 묶음) */
+  .timeline {
+    background: var(--surface);
+    background: color-mix(in srgb, var(--surface) 45%, var(--bg)); /* 반 단계 더 옅게 */
+  }
+
+  .tl-head { margin-bottom: clamp(32px, 5vw, 56px); }
+  .tl-title { margin-top: 14px; max-width: 24ch; }
+
+  /* ── 기본(모바일-퍼스트): 좌측 단일선 1열 ── */
+  .tl-list { position: relative; }
+  .tl-list::before {
+    content: '';
+    position: absolute;
+    top: 6px; bottom: 6px;
+    left: 6px;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .tl-item {
+    position: relative;
+    padding: 0 0 clamp(26px, 5vw, 40px) 30px;
+  }
+  .tl-item:last-child { padding-bottom: 0; }
+
+  /* 노드 점 — 중앙선 위. 홀=골드, 짝=밝은 골드(단일 톤 내 미세 교차) */
+  .tl-item::after {
+    content: '';
+    position: absolute;
+    top: 7px; left: 0;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--accent);
+  }
+  .tl-item:nth-child(even)::after { border-color: var(--accent-2); }
+
+  .tl-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: clamp(16px, 2.4vw, 22px) clamp(18px, 2.6vw, 26px);
+    background: var(--bg); /* 밴드 위 플레이트 — 동화 방지 */
+    border: 1px solid var(--border);
+  }
+
+  .tl-period {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.08em;
+    color: var(--accent-text, var(--accent));
+  }
+  .tl-org {
+    font-family: var(--font-display);
+    font-size: var(--fz-h3);
+    font-weight: 400;
+    line-height: 1.22;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  .tl-role {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    word-break: keep-all;
+  }
+  .tl-summary {
+    margin-top: 3px;
+    font-size: var(--fz-sm);
+    line-height: 1.72;
+    color: var(--ink-2);
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  /* ── 데스크톱: 중앙선 기준 지그재그 교차 ── */
+  @media (min-width: 781px) {
+    .tl-list::before { left: 50%; transform: translateX(-50%); }
+
+    .tl-item {
+      width: 50%;
+      padding: 0 0 clamp(30px, 4vw, 52px) 0;
+    }
+    /* 홀수 — 좌변, 텍스트 우측 정렬(중앙을 향해) */
+    .tl-item:nth-child(odd) {
+      margin-left: 0;
+      padding-right: calc(clamp(24px, 3vw, 44px) + 14px);
+      text-align: right;
+    }
+    /* 짝수 — 우변, 텍스트 좌측 정렬 */
+    .tl-item:nth-child(even) {
+      margin-left: 50%;
+      padding-left: calc(clamp(24px, 3vw, 44px) + 14px);
+      text-align: left;
+    }
+
+    /* 카드는 미러 정렬을 물려받음(오른쪽 정렬 시 요약도 우측) */
+    .tl-item:nth-child(odd) .tl-card { align-items: flex-end; }
+    .tl-item:nth-child(even) .tl-card { align-items: flex-start; }
+
+    /* 노드 점 — 좌우 변의 안쪽 가장자리(=중앙선) 위 */
+    .tl-item::after { top: 9px; }
+    .tl-item:nth-child(odd)::after { left: auto; right: -6px; }
+    .tl-item:nth-child(even)::after { left: -6px; }
+
+    /* 지그재그 리듬(기간·기관명·노드점)은 미러 정렬 유지하되, 러닝텍스트인 요약은
+       항상 좌측정렬 고정 — 홀수 우측정렬의 ragged-left 한글 가독성 저하 방지(채용자 스캔성 회복).
+       블록은 flex-end 로 중앙선을 향해 유지되나 내부 텍스트만 좌→우로 읽히게 한다. */
+    .tl-summary { max-width: 46ch; text-align: left; }
+  }
+</style>

@@ -1,0 +1,517 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// RoiSimulator.astro — AI 서비스 기획 ROI 시뮬레이터 (island, 바닐라 TS)
+//   포팅 원본: _reference/source_v3.1_2.html SIM / calc() / applySim() (L1428-1536)
+//   · 도메인·문서수·LLM등급·애드온 → 예상 기간(주) / 초기 설계비 / 월 운영비 산출.
+//   · ko/en 라벨: locale prop 으로 받아 서버에서 문자열 확정 → 클라이언트 페이로드 최소화.
+//   · applySim: ContactForm(#c-msg/#c-type/#c-name)에 결과를 채워 넣고 #contact 로 이동.
+//     (ContactForm 미존재 시 안전 가드 — 폼 없이도 오류 없음)
+//   · UI: [좌] 도메인 카드 4 / 규모 슬라이더 / LLM 등급 라디오 3 / 애드온 체크 4
+//         [우] LIVE ESTIMATE 패널 (대형 주수 + 스펙 행 + 동적 코멘트 + CTA)
+//   · 컨트롤은 SSR(서버 렌더), 상호작용·산출만 클라이언트 스크립트. 계산 로직 불변.
+//     데이터(숫자·라벨)는 <script type="application/json"> 로 주입해 calc 가 파싱.
+// ═══════════════════════════════════════════════════════════════════════════
+import type { Locale } from '../../i18n/ui';
+interface Props { locale?: Locale }
+const { locale = 'ko' as Locale } = Astro.props;
+const ko = locale === 'ko';
+const pick = <T,>(k: T, e: T): T => (ko ? k : e);
+
+// ── 도메인 아이콘 (SVG, 서버 렌더 전용 — 페이로드 밖) ──
+const domIcon: Record<string, string> = {
+  rag: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M11.5 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v3"/><circle cx="16.5" cy="16.5" r="2.5"/><path d="M18.5 18.5 21 21"/></svg>`,
+  support: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6a8.5 8.5 0 0 1-.9-3.9A8.38 8.38 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/></svg>`,
+  doc: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/></svg>`,
+  counsel: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>`,
+};
+
+// ── 시뮬레이터 데이터 (라벨·코멘트 서버측 로케일 확정) ──
+const domain = [
+  { k: 'rag',     w: 8,  baseCost: 250000, queryCost: 3, l: pick('RAG 검색', 'RAG search'),
+    note: pick('문서 정제·청킹에 기간의 절반을 씁니다. 지식베이스 품질이 결과의 8할.',
+               'Half the timeline goes to cleaning and chunking documents — knowledge-base quality is 80% of the result.') },
+  { k: 'support', w: 7,  baseCost: 350000, queryCost: 5, l: pick('대화형 챗봇', 'Conversational chatbot'),
+    note: pick('잘 모를 때 사람에게 넘기는 에스컬레이션 경로부터 그립니다. 실패 처리가 핵심.',
+               'We design the human-escalation path first. Handling failure well is the core.') },
+  { k: 'doc',     w: 5,  baseCost: 180000, queryCost: 2, l: pick('분석 / BI', 'Analytics / BI'),
+    note: pick('가장 빨리 회수됩니다. SLA 월간 보고서 같은 반복 문서 1종만 잡아도 효과가 큽니다.',
+               'Fastest payback — automating one recurring document (e.g. a monthly SLA report) already pays off.') },
+  { k: 'counsel', w: 10, baseCost: 500000, queryCost: 8, l: pick('AI 에이전트', 'AI agent'),
+    note: pick('대화가 길어지면 토큰 비용이 뛰고, 안전 가드레일·평가 체계에 기간이 많이 갑니다.',
+               'Longer dialogues spike token cost; safety guardrails and evaluation take significant time.') },
+];
+const llm = [
+  { k: 'std', m: 1.0, c: 1.0, l: pick('Standard · 비용 최적', 'Standard · Cost-Optimized'),
+    sub: pick('Claude Haiku — 비용 효율', 'Claude Haiku — cost-efficient') },
+  { k: 'prm', m: 1.3, c: 3.0, l: pick('Premium · 추론', 'Premium · Reasoning'),
+    sub: pick('Claude Sonnet — 추론·창작 최적', 'Claude Sonnet — reasoning & creativity') },
+  { k: 'fnt', m: 1.6, c: 8.0, l: pick('Frontier · 최고 성능', 'Frontier · State-of-Art'),
+    sub: pick('Claude Opus — 미션 크리티컬', 'Claude Opus — mission-critical') },
+];
+const add = [
+  { k: 'mcp',  w: 2.0, c: 80000,   l: pick('MCP 서버 통합', 'MCP server integration'),
+    sub: pick('외부 도구·사내 시스템 호출', 'External tools · internal systems') },
+  { k: 'eval', w: 2.5, c: 150000,  l: pick('평가·튜닝 셋업', 'Evaluation · tuning setup'),
+    sub: pick('자동 채점 파이프라인', 'Auto-scoring pipeline') },
+  { k: 'i18n', w: 2.0, c: 100000,  l: pick('다국어 응대', 'Multilingual'),
+    sub: pick('2개 이상 언어', 'Two or more languages') },
+  { k: 'onp',  w: 4.0, c: 1200000, l: pick('온프레미스·금융보안', 'On-premise · secure'),
+    sub: pick('사내 인프라 호스팅', 'In-house infrastructure hosting') },
+];
+
+// 클라이언트가 쓰는 로케일 문자열 조각
+const S = {
+  weeksSuffix: pick('주 (MVP 기준)', ' wks (MVP)'),
+  wk: pick('주', ' wks'),
+  perMonth: pick('/월', '/mo'),
+  applyMsg: {
+    head: pick('[AI 서비스 기획 상담 — 시뮬레이터 결과]', '[AI service planning inquiry — simulator result]'),
+    type: pick('서비스 유형', 'Service type'),
+    size: pick('지식베이스 규모', 'Knowledge-base size'),
+    grade: pick('모델 등급', 'Model grade'),
+    addons: pick('부가 요건', 'Add-ons'),
+    none: pick('없음', 'none'),
+    build: pick('예상 기획·구축', 'Est. planning + build'),
+    init: pick('초기 설계비', 'Initial design fee'),
+    monthly: pick('월간 운영비', 'Monthly running cost'),
+    negotiable: pick('(협의 가능)', '(negotiable)'),
+    docsUnit: pick('건', ' docs'),
+    tail: pick(
+      '위 구성으로 실제 진행 가능성을 상담받고 싶습니다.\n— 회사/개인:\n— 예산 범위:\n— 시작 희망 시점:',
+      'I would like to discuss whether this setup is feasible.\n— Company/Individual:\n— Budget range:\n— Preferred start:'
+    ),
+  },
+};
+
+// JSON 주입 페이로드 (calc 가 소비 — 숫자·라벨·note)
+const payload = { domain, llm, add, s: S, locale };
+
+// 정적 라벨(SSR 렌더)
+const L = {
+  fType: pick('서비스 도메인', 'Service domain'),
+  fSize: pick('지식베이스 규모', 'Knowledge-base size'),
+  unitDocs: pick('건', 'docs'),
+  sizeMin: pick('50 (MVP)', '50 (MVP)'),
+  sizeMax: pick('5,000+ (엔터프라이즈)', '5,000+ (enterprise)'),
+  fGrade: pick('LLM 모델 등급', 'LLM model grade'),
+  fAdd: pick('추가 구성', 'Add-ons'),
+  estLabel: pick('LIVE ESTIMATE', 'LIVE ESTIMATE'),
+  oWeeks: pick('예상 기획·구축 기간', 'Est. planning + build time'),
+  heroUnit: pick('주 (MVP 기준)', ' wks (MVP)'),
+  heroSub: pick('기획 · 데이터 정제 · 프롬프트 설계 · 평가셋 포함', 'Planning · data cleaning · prompt design · eval set'),
+  rType: pick('서비스 유형', 'Service type'),
+  rData: pick('데이터 정제', 'Data cleaning'),
+  rEval: pick('프롬프트 · RAG 설계', 'Prompt · RAG design'),
+  rGrade: pick('LLM 등급', 'LLM grade'),
+  rInit: pick('초기 설계비 (1회)', 'Initial design fee (one-time)'),
+  rCost: pick('월간 운영비', 'Monthly running cost'),
+  negInline: pick('(협의 가능)', '(negotiable)'),
+  note0: pick('유형을 고르면 코멘트가 나옵니다.', 'Pick a type to see a comment.'),
+  disc: pick(
+    '※ 본 시뮬레이터는 대략적인 감각 산출 도구이며, 실제 기간·비용은 데이터 품질·도메인 복잡도·사용자 규모에 따라 크게 달라집니다.',
+    '※ This is a rough estimation tool; actual time and cost vary greatly with data quality, domain complexity and user scale.'
+  ),
+  discStrong: pick('모든 가격은 협의 가능합니다.', 'All prices are negotiable.'),
+  apply: pick('이 구성으로 상담 요청하기', 'Request a consult with this setup'),
+  docsAria: pick('문서 수', 'Number of documents'),
+};
+---
+
+<div class="roi" data-roi>
+  <!-- ── 좌: 구성 ── -->
+  <div class="roi-in">
+    <!-- ① 서비스 도메인 카드 4 -->
+    <div class="fld">
+      <span class="k"><i class="idx">1</i>{L.fType}</span>
+      <div class="dcards" id="ch-domain" role="group" aria-label={L.fType}>
+        {domain.map((d) => (
+          <button
+            type="button"
+            class="opt dcard"
+            data-g="domain"
+            data-k={d.k}
+            aria-pressed={d.k === 'rag' ? 'true' : 'false'}
+          >
+            <span class="dcard-ic" set:html={domIcon[d.k]} aria-hidden="true" />
+            <span class="dcard-l">{d.l}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- ② 지식베이스 규모 슬라이더 -->
+    <div class="fld">
+      <div class="fld-head">
+        <span class="k"><i class="idx">2</i>{L.fSize}</span>
+        <span class="size-badge"><span class="num" id="docs-v">800</span> {L.unitDocs}</span>
+      </div>
+      <input type="range" id="docs" min="50" max="5000" step="50" value="800" aria-label={L.docsAria} />
+      <div class="size-scale">
+        <span>{L.sizeMin}</span>
+        <span>{L.sizeMax}</span>
+      </div>
+    </div>
+
+    <!-- ③ LLM 모델 등급 라디오 3 -->
+    <div class="fld">
+      <span class="k"><i class="idx">3</i>{L.fGrade}</span>
+      <div class="tiers" id="ch-llm" role="group" aria-label={L.fGrade}>
+        {llm.map((d) => (
+          <button
+            type="button"
+            class="opt tier"
+            data-g="llm"
+            data-k={d.k}
+            aria-pressed={d.k === 'std' ? 'true' : 'false'}
+          >
+            <span class="tier-dot" aria-hidden="true"></span>
+            <span class="tier-tx">
+              <span class="tier-l">{d.l}</span>
+              <span class="tier-sub">{d.sub}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- ④ 추가 구성 체크 4 -->
+    <div class="fld">
+      <span class="k"><i class="idx">4</i>{L.fAdd}</span>
+      <div class="addons" id="ch-add" role="group" aria-label={L.fAdd}>
+        {add.map((d) => (
+          <button type="button" class="opt addon" data-g="add" data-k={d.k} aria-pressed="false">
+            <span class="addon-box" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4" /></svg>
+            </span>
+            <span class="addon-tx">
+              <span class="addon-l">{d.l}</span>
+              <span class="addon-sub">{d.sub}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 우: LIVE ESTIMATE ── -->
+  <div class="roi-out">
+    <div class="est-head">
+      <span class="est-badge">{L.estLabel}</span>
+    </div>
+
+    <div class="est-hero">
+      <span class="k">{L.oWeeks}</span>
+      <div class="est-weeks"><span class="v" id="o-weeks">—</span><span class="unit">{L.heroUnit}</span></div>
+      <p class="est-hero-sub">{L.heroSub}</p>
+    </div>
+
+    <div class="est-specs">
+      <div class="row"><span class="rk">{L.rType}</span><span class="rv strong" id="o-type">—</span></div>
+      <div class="row"><span class="rk">{L.rData}</span><span class="rv" id="o-data">—</span></div>
+      <div class="row"><span class="rk">{L.rEval}</span><span class="rv" id="o-eval">—</span></div>
+      <div class="row"><span class="rk">{L.rGrade}</span><span class="rv accent" id="o-grade">—</span></div>
+      <div class="row"><span class="rk">{L.rInit} <span class="rk-note">{L.negInline}</span></span><span class="rv" id="o-init">—</span></div>
+      <div class="row"><span class="rk">{L.rCost} <span class="rk-note">{L.negInline}</span></span><span class="rv strong" id="o-cost">—</span></div>
+    </div>
+
+    <p class="roi-note" id="o-note">{L.note0}</p>
+    <p class="roi-disc">{L.disc} <strong>{L.discStrong}</strong></p>
+
+    <a href="#contact" class="roi-apply" id="o-apply">
+      {L.apply}
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" /></svg>
+    </a>
+  </div>
+
+  <script is:inline type="application/json" id="roi-data" set:html={JSON.stringify(payload)} />
+</div>
+
+<style>
+  .roi {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+    word-break: keep-all;
+    font-synthesis: none;
+  }
+  .roi-in { padding: clamp(20px, 3vw, 32px); display: flex; flex-direction: column; gap: clamp(20px, 2.6vw, 28px); }
+  .roi-out {
+    padding: clamp(20px, 3vw, 32px);
+    background: var(--surface-2);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .fld { display: flex; flex-direction: column; gap: 12px; }
+  .fld-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .k {
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 400 var(--fz-xxs) / 1.3 var(--font-mono);
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .k .idx {
+    display: inline-grid; place-items: center;
+    width: 17px; height: 17px; border-radius: 50%;
+    background: var(--accent-tint); color: var(--accent-text);
+    font-style: normal; font-size: 10px; font-weight: 600; letter-spacing: 0;
+  }
+  .num { color: var(--accent-text); font-weight: 700; }
+
+  /* ── ① 도메인 카드 ── */
+  .dcards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .dcard {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 10px; border: 1px solid var(--border); border-radius: 12px;
+    background: transparent; color: var(--ink-2); cursor: pointer; text-align: center;
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+                background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  }
+  .dcard-ic { display: inline-grid; place-items: center; color: var(--ink-3); transition: color var(--dur) var(--ease); }
+  .dcard-l { font: 600 var(--fz-xs) / 1.25 var(--font-body); }
+  .dcard:hover { color: var(--ink); border-color: var(--ink-3); }
+  .dcard:hover .dcard-ic { color: var(--ink-2); }
+  .dcard[aria-pressed='true'] {
+    color: var(--accent-text); border-color: var(--accent);
+    background: var(--accent-tint); box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .dcard[aria-pressed='true'] .dcard-ic { color: var(--accent); }
+
+  /* ── ② 슬라이더 ── */
+  .size-badge {
+    font: 600 var(--fz-xs) / 1 var(--font-mono);
+    color: var(--ink-2); padding: 5px 11px; border: 1px solid var(--border);
+    border-radius: 999px; background: var(--surface); white-space: nowrap;
+  }
+  input[type='range'] { width: 100%; accent-color: var(--accent); }
+  .size-scale {
+    display: flex; justify-content: space-between; gap: 12px;
+    font: 400 10px / 1.2 var(--font-mono); color: var(--ink-3); letter-spacing: 0.02em;
+  }
+
+  /* ── ③ LLM 등급 라디오 행 ── */
+  .tiers { display: flex; flex-direction: column; gap: 8px; }
+  .tier {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 13px; border: 1px solid var(--border); border-radius: 12px;
+    background: transparent; cursor: pointer; text-align: left; width: 100%;
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .tier-dot {
+    flex: none; width: 15px; height: 15px; border-radius: 50%;
+    border: 1.5px solid var(--ink-3); position: relative;
+    transition: border-color var(--dur) var(--ease);
+  }
+  .tier-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .tier-l { font: 600 var(--fz-xs) / 1.2 var(--font-body); color: var(--ink); }
+  .tier-sub { font: 400 11px / 1.3 var(--font-body); color: var(--ink-3); }
+  .tier:hover { border-color: var(--ink-3); }
+  .tier[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-tint); }
+  .tier[aria-pressed='true'] .tier-dot { border-color: var(--accent); }
+  .tier[aria-pressed='true'] .tier-dot::after {
+    content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--accent);
+  }
+  .tier[aria-pressed='true'] .tier-l { color: var(--accent-text); }
+
+  /* ── ④ 애드온 체크 행 ── */
+  .addons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .addon {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 11px 12px; border: 1px solid var(--border); border-radius: 12px;
+    background: transparent; cursor: pointer; text-align: left; width: 100%;
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .addon-box {
+    flex: none; width: 17px; height: 17px; border-radius: 5px;
+    border: 1.5px solid var(--ink-3); display: grid; place-items: center;
+    color: transparent; transition: all var(--dur) var(--ease); margin-top: 1px;
+  }
+  .addon-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .addon-l { font: 600 var(--fz-xs) / 1.2 var(--font-body); color: var(--ink-2); }
+  .addon-sub { font: 400 10px / 1.3 var(--font-body); color: var(--ink-3); }
+  .addon:hover { border-color: var(--ink-3); }
+  .addon:hover .addon-l { color: var(--ink); }
+  .addon[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-tint); }
+  .addon[aria-pressed='true'] .addon-box { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+  .addon[aria-pressed='true'] .addon-l { color: var(--accent-text); }
+
+  /* 공용 포커스 링 */
+  .opt:focus-visible { outline: 2px dashed var(--accent); outline-offset: 2px; }
+
+  /* ── 우 패널 ── */
+  .est-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .est-badge { font: 700 var(--fz-xxs) / 1 var(--font-mono); letter-spacing: 0.24em; color: var(--accent-text); }
+
+  .est-hero { display: flex; flex-direction: column; gap: 6px; }
+  .est-weeks { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .est-weeks .v {
+    font: 700 clamp(2.4rem, 6vw, 3rem) / 1 var(--font-display-en); color: var(--accent-text);
+    letter-spacing: -0.01em;
+  }
+  .est-weeks .unit { font: 500 var(--fz-sm) / 1.2 var(--font-body); color: var(--ink-2); }
+  .est-hero-sub { font: 400 11px / 1.4 var(--font-body); color: var(--ink-3); }
+
+  .est-specs {
+    display: flex; flex-direction: column; gap: 9px;
+    padding-top: 14px; border-top: 1px solid var(--border);
+  }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .rk { font: 400 var(--fz-xs) / 1.3 var(--font-body); color: var(--ink-3); }
+  .rk-note { font-size: 10px; color: var(--ink-3); letter-spacing: 0; white-space: nowrap; }
+  .rv { font: 500 var(--fz-xs) / 1.3 var(--font-body); color: var(--ink-2); text-align: right; }
+  .rv.strong { font-weight: 600; color: var(--ink); }
+  .rv.accent { color: var(--accent-text); font-weight: 600; }
+
+  .roi-note {
+    font-size: var(--fz-xs); line-height: 1.6; color: var(--ink-2); min-height: 2.6em;
+    padding: 12px 14px; border-radius: 10px; background: var(--surface);
+    border: 1px solid var(--border-soft);
+  }
+  .roi-disc { font-size: 11px; line-height: 1.55; color: var(--ink-3); }
+  .roi-disc strong { color: var(--ink); }
+
+  .roi-apply {
+    margin-top: auto;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 16px; border: 1px solid var(--accent); border-radius: 999px;
+    font: 600 var(--fz-xs) / 1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--on-accent); background: var(--accent);
+    transition: color var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .roi-apply:hover { background: var(--accent-2); border-color: var(--accent-2); }
+  .roi-apply:focus-visible { outline: 2px dashed var(--accent); outline-offset: 3px; }
+
+  @media (max-width: 720px) {
+    .roi { grid-template-columns: 1fr; }
+    .roi-out { border-left: 0; border-top: 1px solid var(--border); }
+  }
+  @media (max-width: 430px) {
+    .addons { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .roi *, .roi *::before, .roi *::after { transition: none !important; }
+  }
+</style>
+
+<script>
+  // ── ROI 시뮬레이터 로직 (원본 source_v3.1_2.html calc/applySim 이식 — 계산 불변) ──
+  type Domain = { k: string; l: string; w: number; baseCost: number; queryCost: number; note: string };
+  type Llm = { k: string; l: string; m: number; c: number; sub?: string };
+  type Add = { k: string; l: string; w: number; c: number; sub?: string };
+  type Payload = {
+    domain: Domain[]; llm: Llm[]; add: Add[]; locale: 'ko' | 'en';
+    s: {
+      weeksSuffix: string; wk: string; perMonth: string;
+      applyMsg: {
+        head: string; type: string; size: string; grade: string; addons: string; none: string;
+        build: string; init: string; monthly: string; negotiable: string; docsUnit: string; tail: string;
+      };
+    };
+  };
+
+  const root = document.querySelector<HTMLElement>('[data-roi]');
+  const dataEl = document.getElementById('roi-data');
+  if (root && dataEl?.textContent) {
+    const D = JSON.parse(dataEl.textContent) as Payload;
+    const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s);
+
+    const sel = { domain: 'rag', llm: 'std', add: new Set<string>(), docs: 800 };
+    let out: { weeks: number; initCost: number; monthlyCost: number; d: Domain; l: Llm; docs: number } | null = null;
+
+    // ── 옵션 클릭(도메인·LLM 단일 선택 / 애드온 토글) — SSR 마크업에 바인딩 재연결 ──
+    root.querySelectorAll<HTMLButtonElement>('.opt').forEach((c) =>
+      c.addEventListener('click', () => {
+        const g = c.dataset.g!, k = c.dataset.k!;
+        if (g === 'add') {
+          sel.add.has(k) ? sel.add.delete(k) : sel.add.add(k);
+          c.setAttribute('aria-pressed', String(sel.add.has(k)));
+        } else {
+          (sel as any)[g] = k;
+          root.querySelectorAll<HTMLButtonElement>(`.opt[data-g="${g}"]`).forEach((x) =>
+            x.setAttribute('aria-pressed', String(x.dataset.k === k)));
+        }
+        calc();
+      })
+    );
+
+    const range = $<HTMLInputElement>('#docs');
+    const docsV = $('#docs-v');
+    if (range) {
+      range.addEventListener('input', () => {
+        sel.docs = +range.value;
+        if (docsV) docsV.textContent = (+range.value).toLocaleString();
+        calc();
+      });
+    }
+
+    // ── 산출 (계산 함수·상수 원본 유지 — log2 보정·vectorCost·queryEstimate·등급 배수·주당 인건비) ──
+    function calc() {
+      const d = D.domain.find((x) => x.k === sel.domain)!;
+      const l = D.llm.find((x) => x.k === sel.llm)!;
+      const docs = sel.docs;
+
+      const docW = Math.log2(docs / 100 + 1) * 1.8;
+      let w = (d.w + docW) * l.m;
+
+      const fixedOps = 1000000;                          // 운영·모니터링 고정 월비용 (관측·로깅·온콜)
+      const infraCost = d.baseCost;                      // 도메인 인프라 월 기본
+      const vectorCost = docs * 200;                     // 벡터 DB 저장·색인 (문서 수 비례)
+      const queryEstimate = Math.min(docs * 60, 80000);  // 월 추정 쿼리량 (상한 8만 — 폭주 방지)
+      const apiCost = queryEstimate * d.queryCost * l.c; // 등급 배수 std1/prm3/fnt8 유지
+      let c = fixedOps + infraCost + vectorCost + apiCost;
+
+      sel.add.forEach((k) => { const a = D.add.find((x) => x.k === k)!; w += a.w; c += a.c; });
+
+      const weeks = Math.max(4, Math.round(w));
+      const dataW = Math.max(1, Math.round(weeks * 0.45));
+      const evalW = Math.max(1, Math.round(weeks * 0.25));
+      const monthlyCost = Math.round(c / 10000) * 10000;
+
+      const weeklyRate = 2000000, setupFee = 3000000;  // 주당 인건비 · 셋업 (백만 단위 반올림)
+      const initCost = Math.round((weeklyRate * weeks + setupFee) / 1000000) * 1000000;
+
+      const set = (id: string, v: string) => { const el = $(id); if (el) el.textContent = v; };
+      set('#o-type', d.l);
+      set('#o-weeks', String(weeks));
+      set('#o-data', `${dataW}${D.s.wk}`);
+      set('#o-eval', `${evalW}${D.s.wk}`);
+      set('#o-grade', l.l);
+      set('#o-init', `~ ₩${initCost.toLocaleString()}`);
+      set('#o-cost', `~ ₩${monthlyCost.toLocaleString()}${D.s.perMonth}`);
+      set('#o-note', d.note);
+      out = { weeks, initCost, monthlyCost, d, l, docs };
+    }
+
+    // ── 상담 폼 자동 채움 (ContactForm 이 있을 때만) ──
+    $('#o-apply')?.addEventListener('click', () => {
+      if (!out) return;
+      const m = D.s.applyMsg;
+      const adds = [...sel.add].map((k) => D.add.find((x) => x.k === k)!.l).join(', ') || m.none;
+      const type = document.getElementById('c-type') as HTMLSelectElement | null;
+      const msg = document.getElementById('c-msg') as HTMLTextAreaElement | null;
+      const name = document.getElementById('c-name') as HTMLInputElement | null;
+      if (type) type.value = 'proj';
+      if (msg) {
+        msg.value =
+`${m.head}
+
+· ${m.type}: ${out.d.l}
+· ${m.size}: ${out.docs.toLocaleString()}${m.docsUnit}
+· ${m.grade}: ${out.l.l}
+· ${m.addons}: ${adds}
+· ${m.build}: ${out.weeks}${D.s.weeksSuffix}
+· ${m.init}: ~ ₩${out.initCost.toLocaleString()} ${m.negotiable}
+· ${m.monthly}: ~ ₩${out.monthlyCost.toLocaleString()}${D.s.perMonth} ${m.negotiable}
+
+${m.tail}`;
+      }
+      // 앵커(#contact)가 이동을 처리 — 폼이 있으면 이름 필드로 포커스
+      if (name) setTimeout(() => name.focus(), 60);
+    });
+
+    calc();
+  }
+</script>

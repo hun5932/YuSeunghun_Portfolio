@@ -1,0 +1,243 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   classic.css — 시안 D(클래식) 원천 토큰 + 에디토리얼 조판 + 인쇄 완벽
+   ───────────────────────────────────────────────────────────────────────────
+   스펙 정본: _analysis/variants-spec.md §「시안 D — 클래식」
+   철학: 에디토리얼 세리프. 무모션. 인쇄 완벽. CV/서지 중심. 극절제 버건디.
+        절대 원칙(스펙 D): JS 실패·인쇄 시에도 본문이 사라지면 안 됨 → 정적 렌더 유지.
+
+   ▚ 이 파일이 정의하는 것 ▚
+     ① :root[data-variant="classic"]              → 라이트(cream) 원천 --pf-*
+     ② :root[data-variant="classic"][data-theme="dark"] → 무너지지 않게 하는 절제 다크
+     ③ 세리프 서체 스택(Georgia·Nanum Myeongjo·serif — 웹폰트 추가 금지)
+     ④ 번호 섹션 헤딩 counter (bchiang7 numbered-heading 재구현)
+     ⑤ 헤어라인 룰 --pf-rule
+     ⑥ 무모션 — .reveal 애니 전면 해제(항상 즉시 보임)
+     ⑦ @media print — nav·모션 숨김, 잉크 절약 조판
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ① 라이트 — cream + deep burgundy (인쇄 지향)
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="classic"] {
+  /* 표면 (cream / print white) */
+  --pf-bg:          #FBFAF6;  /* 페이지 배경 — cream */
+  --pf-surface:     #FFFFFF;  /* 인쇄 표면 — 순백 */
+  --pf-surface-2:   #F4F1E9;  /* 승격 표면 */
+  --pf-border:      #DAD3C2;  /* 1px 헤어라인 룰 */
+  --pf-border-soft: #E7E2D4;
+
+  /* 잉크 */
+  --pf-ink:         #16130E;  /* 본문 */
+  --pf-ink-2:       #3A342A;  /* 보조 */
+  --pf-ink-3:       #55503F;  /* 뮤트 — cream 위 AA 통과 */
+
+  /* 액센트 (deep burgundy — 극절제) */
+  --pf-accent:      #6E2230;  /* primary */
+  --pf-accent-2:    #8C6A2B;  /* classic gold — 대체 액센트 */
+  --pf-accent-tint: rgba(110, 34, 48, 0.08);
+  --pf-on-accent:   #FBFAF6;
+
+  /* 계측 수치 전용 */
+  --pf-measure:     #6E2230;  /* 버건디로 통일(단색 규율) */
+
+  /* 서체 — 에디토리얼 세리프. 본문까지 세리프(장문 가독 조판).
+     웹폰트 추가 금지: 시스템 세리프 + 시스템/CDN 한글 명조만. */
+  --pf-font-display:    Georgia, "Nanum Myeongjo", "Iowan Old Style", "Times New Roman", "Noto Serif KR", serif;
+  --pf-font-display-en: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --pf-font-body:       Georgia, "Nanum Myeongjo", "Iowan Old Style", "Times New Roman", "Noto Serif KR", serif;
+  --pf-font-mono:       ui-monospace, "SFMono-Regular", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* 시안 전용 장식 토큰 (계약 밖) — 헤어라인 룰 별칭 */
+  --pf-rule:        var(--pf-border);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ② 다크 — 절제된 charcoal + cream (기본은 light. 토글 시 무너지지 않게 하는 안전망)
+      스펙상 classic 은 light 지향이나 data-theme 축이 직교로 존재하므로 폴백 제공.
+   ───────────────────────────────────────────────────────────────────────── */
+:root[data-variant="classic"][data-theme="dark"] {
+  --pf-bg:          #16130E;
+  --pf-surface:     #1D1A14;
+  --pf-surface-2:   #262119;
+  --pf-border:      #3A3428;
+  --pf-border-soft: #2B2620;
+
+  --pf-ink:         #F3EFE6;
+  --pf-ink-2:       #C9C2B2;
+  --pf-ink-3:       #948C7B;
+
+  --pf-accent:      #C77A86;  /* 버건디를 다크에서 밝힘 */
+  --pf-accent-2:    #C9A24B;
+  --pf-accent-tint: rgba(199, 122, 134, 0.12);
+  --pf-on-accent:   #16130E;
+
+  --pf-measure:     #C77A86;
+  --pf-rule:        var(--pf-border);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ③ 세리프 조판 미세조정 — 세리프는 산스보다 크게 읽히므로 리듬 보정
+   ───────────────────────────────────────────────────────────────────────── */
+[data-variant="classic"] body {
+  font-weight: 400;                 /* 세리프는 350 이 너무 얇음 */
+  letter-spacing: 0;
+  line-height: 1.72;
+}
+[data-variant="classic"] .d1,
+[data-variant="classic"] .d2 {
+  font-weight: 400;
+  letter-spacing: -0.015em;         /* 세리프는 타이트 트래킹 과하면 부자연 */
+}
+/* 클래식은 라틴 이탤릭 방주 유지(세리프 이탤릭은 진짜 글리프 존재) */
+[data-variant="classic"] .lat,
+[data-variant="classic"] .gloss { font-style: italic; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ④ 번호 섹션 헤딩 — counter (bchiang7 numbered-heading 재구현)
+   ───────────────────────────────────────────────────────────────────────────
+   마크업(예): <h2 class="d2 numbered-heading">Selected Work</h2>
+   '01.'·'02.' … 자동 넘버 + 뒤따르는 1px 룰 라인. counter 는 순수 CSS → 인쇄 안전.
+   카운터 리셋은 본문 루트(#main)에서 1회 → 섹션 순서대로 증가.
+   ───────────────────────────────────────────────────────────────────────── */
+[data-variant="classic"] #main { counter-reset: pf-section; }
+
+[data-variant="classic"] .numbered-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  counter-increment: pf-section;
+  white-space: nowrap;
+}
+[data-variant="classic"] .numbered-heading::before {
+  content: counter(pf-section, decimal-leading-zero) ".";
+  font-family: var(--font-mono);
+  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+/* 헤딩 뒤로 이어지는 헤어라인 룰 (편집 디자인의 표제 규칙선) */
+[data-variant="classic"] .numbered-heading::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  margin-left: 0.4em;
+  background: var(--pf-rule, var(--border));
+}
+
+/* fancyList — ▹ 마커(bchiang7 mixins 재구현), 버건디 캐럿 */
+[data-variant="classic"] .fancy-list { list-style: none; }
+[data-variant="classic"] .fancy-list li {
+  position: relative;
+  padding-left: 1.5em;
+  margin-bottom: 0.4em;
+}
+[data-variant="classic"] .fancy-list li::before {
+  content: "\25B9";                 /* ▹ */
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⑤ 헤어라인 룰 — --pf-rule 소비 유틸(편집 디자인 규칙선)
+   ───────────────────────────────────────────────────────────────────────── */
+[data-variant="classic"] .rule,
+[data-variant="classic"] .rule-sm { background: var(--pf-rule, var(--border)); }
+[data-variant="classic"] .card { border-color: var(--pf-rule, var(--border)); }
+/* 섹션 구분도 룰 색으로 통일 */
+[data-variant="classic"] .sec + .sec { border-top-color: var(--pf-rule, var(--border)); }
+
+/* 링크 강조 — 밑선 있는 세리프 링크(에디토리얼 관습). 단색 규율. */
+[data-variant="classic"] .inlineLink {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--pf-rule, var(--border));
+}
+[data-variant="classic"] .inlineLink:hover,
+[data-variant="classic"] .inlineLink:focus-visible {
+  text-decoration-color: currentColor;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⑥ 무모션 — .reveal 애니 전면 해제 (스펙 D: 정적 렌더 절대 원칙)
+   ───────────────────────────────────────────────────────────────────────────
+   base.css 의 scroll-driven/IO 리빌을 클래식에서 무력화. 콘텐츠는 항상 온전히
+   렌더된다(JS 실패·인쇄·저사양 모두 안전). 특이도로 base html.js .reveal 를 이긴다.
+   ───────────────────────────────────────────────────────────────────────── */
+html.js[data-variant="classic"] .reveal,
+html.js[data-variant="classic"] .reveal.is-in {
+  opacity: 1 !important;
+  transform: none !important;
+  clip-path: none !important;
+  animation: none !important;
+  transition: none !important;
+  will-change: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⑦ @media print — 인쇄 완벽(nav·모션 숨김, 잉크 절약)
+   ───────────────────────────────────────────────────────────────────────────
+   astrofy/astrowind 모두 print 스타일 부재 → 직접 작성.
+   순백 배경·먹 텍스트, 크롬(nav/footer/skip/토글) 제거, 페이지 넘김 보호.
+   ───────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* 색·배경 초기화 — 잉크 절약, 순백 지면 */
+  [data-variant="classic"] body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  /* 크롬 제거 — 내비·푸터·스킵·테마/언어 토글·장식 배경 */
+  [data-variant="classic"] .skip,
+  [data-variant="classic"] nav,
+  [data-variant="classic"] header nav,
+  [data-variant="classic"] footer,
+  [data-variant="classic"] [data-print="hide"],
+  [data-variant="classic"] .theme-switcher,
+  [data-variant="classic"] .lang-switcher,
+  [data-variant="classic"] [aria-hidden="true"].bg,
+  [data-variant="classic"] .strange-loop { display: none !important; }
+
+  /* 섹션 리듬 압축 + 페이지 경계 보호 */
+  [data-variant="classic"] .sec { padding-block: 18pt; }
+  [data-variant="classic"] .sec + .sec { border-top-color: #cccccc; }
+  [data-variant="classic"] .card {
+    border-color: #cccccc !important;
+    background: transparent !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  [data-variant="classic"] h1,
+  [data-variant="classic"] h2,
+  [data-variant="classic"] h3,
+  [data-variant="classic"] .d1,
+  [data-variant="classic"] .d2,
+  [data-variant="classic"] .numbered-heading {
+    break-after: avoid;
+    page-break-after: avoid;
+    color: #000000 !important;
+  }
+  [data-variant="classic"] .numbered-heading::before { color: #000000 !important; }
+  [data-variant="classic"] .numbered-heading::after { background: #999999 !important; }
+
+  /* 링크: 텍스트만(URL 남발 방지). 밑선만 옅게 */
+  [data-variant="classic"] a {
+    color: #000000 !important;
+    text-decoration-color: #999999 !important;
+  }
+
+  /* 인쇄 시 배경 그래픽 강제 렌더 해제(브라우저 기본 존중) */
+  [data-variant="classic"] * {
+    -webkit-print-color-adjust: economy;
+    print-color-adjust: economy;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}

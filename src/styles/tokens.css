@@ -1,0 +1,127 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   tokens.css — 디자인 토큰 2층 아키텍처 (전 시안 공통 기반)
+   ───────────────────────────────────────────────────────────────────────────
+   레퍼런스 이관: _reference/source_v3.1_2.html <style> :root/[data-theme] 토큰
+   스펙 정본: _analysis/variants-spec.md §0 (공유 토큰 골격)
+
+   ▚ 2층 구조 ▚
+     ① 원천(source) — 팔레트 실값.  변수명: --pf-*
+        · :root 안전 폴백 팔레트를 이 파일에 둔다 (팔레트값은 minimal 한지). 배포
+          DEFAULT_VARIANT 은 v2evolved 이나, 이 :root 는 시안 CSS 미로드 시 안전망.
+        · 시안별/테마별 실값은 styles/variants/*.css 가 :root[data-variant][data-theme]
+          에서 --pf-* 만 재정의한다 (다른 에이전트 담당 — 이 파일은 손대지 않음).
+     ② 시맨틱(semantic) — 컴포넌트가 소비하는 이름.  변수명: --bg / --ink / --accent …
+        · 시안·테마와 무관하게 항상 원천 --pf-* 를 가리킨다 (매핑 고정).
+        · 컴포넌트/섹션은 오직 이 시맨틱 이름만 쓴다. --pf-* 직접 참조 금지.
+
+   ▚ data-variant vs data-theme (직교 2축) ▚
+     · data-variant = 디자인 시스템 (minimal | tradition | selfref | classic)
+     · data-theme   = 그 안의 색 모드 (light | dark)
+     두 축은 곱집합. 시안 CSS는 두 속성을 조합해 --pf-* 를 세팅한다.
+
+   ▚ 시안 CSS 계약 (styles/variants/*.css 가 반드시 정의할 원천 토큰) ▚
+     색:  --pf-bg --pf-surface --pf-surface-2 --pf-border --pf-border-soft
+          --pf-ink --pf-ink-2 --pf-ink-3
+          --pf-accent --pf-accent-2 --pf-accent-tint --pf-on-accent --pf-measure
+     서체: --pf-font-display --pf-font-display-en --pf-font-body --pf-font-mono
+     (장식 토큰 --pf-glow / --pf-najeon 등은 각 시안 전용 — 계약 밖, 자유)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ① 원천 토큰 — :root 안전 폴백 (팔레트값은 minimal 라이트: 한지 + 옻칠골드)
+      시안 CSS 미로드 시에도 사이트가 온전히 렌더되도록 하는 안전망(배포 기본 시안은 v2evolved).
+      :root[data-variant="…"] (특이도 0,2,0) 가 이 :root (0,1,0) 를 이긴다.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* 표면 계열 (한지) */
+  --pf-bg:          #FAF6EC;  /* 페이지 배경 */
+  --pf-surface:     #F3EDDE;  /* 카드·패널 */
+  --pf-surface-2:   #E8E0CC;  /* 승격 표면·깊은 패널 */
+  --pf-border:      #D2C9B3;  /* 헤어라인 */
+  --pf-border-soft: #E3DDCC;  /* 옅은 구분선 */
+
+  /* 잉크 계열 (먹) */
+  --pf-ink:         #1B1917;  /* 본문 기본 */
+  --pf-ink-2:       #403A31;  /* 보조 */
+  --pf-ink-3:       #5A5348;  /* 뮤트 (WCAG AA 소형 텍스트 통과 목표) */
+
+  /* 액센트 (옻칠골드 — 단색 규율) */
+  --pf-accent:      #A17C3A;
+  --pf-accent-2:    #C9A24B;                 /* 밝은/hover */
+  --pf-accent-tint: rgba(161, 124, 58, 0.10);/* 옅은 배경 틴트 */
+  --pf-on-accent:   #FAF6EC;                 /* 액센트 위 텍스트 */
+
+  /* 계측 수치 전용 — 승훈 '실물검증' 원칙: 셀 수 있는 것만 이 색 (옻 red) */
+  --pf-measure:     #8A2E20;
+
+  /* 서체 — 시스템 스택 + Pretendard(CDN) 우선. 커스텀 폰트 파일 미다운로드.
+     시안 CSS 가 디스플레이 세리프 등을 오버라이드할 수 있다. */
+  --pf-font-display:    ui-serif, "Iowan Old Style", "Apple Garamond", Georgia, "Nanum Myeongjo", "Noto Serif KR", serif;
+  --pf-font-display-en: ui-serif, "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --pf-font-body:       "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pf-font-mono:       ui-monospace, "SFMono-Regular", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ② 시맨틱 토큰 — 컴포넌트 소비층 (원천 --pf-* 를 가리키기만 함, 실값 없음)
+      시안/테마가 바뀌어도 이 매핑은 불변 → 컴포넌트 무수정 전환.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --bg:          var(--pf-bg);
+  --surface:     var(--pf-surface);
+  --surface-2:   var(--pf-surface-2);
+  --border:      var(--pf-border);
+  --border-soft: var(--pf-border-soft);
+
+  --ink:   var(--pf-ink);
+  --ink-2: var(--pf-ink-2);
+  --ink-3: var(--pf-ink-3);
+
+  --accent:      var(--pf-accent);
+  --accent-2:    var(--pf-accent-2);
+  --accent-tint: var(--pf-accent-tint);
+  --on-accent:   var(--pf-on-accent);
+  --measure:     var(--pf-measure);
+  /* 소형 텍스트 전용 진한 액센트 — .k 키커 등 12px 라벨의 WCAG AA(4.5:1) 확보용.
+     시안이 --pf-accent-text 를 정의하면 그 값을, 아니면 일반 --pf-accent 로 폴백.
+     (minimal/tradition 라이트는 옻칠골드가 소형 텍스트에서 대비 미달 → 진한 골드로 교체.) */
+  --accent-text: var(--pf-accent-text, var(--pf-accent));
+
+  --font-display:    var(--pf-font-display);
+  --font-display-en: var(--pf-font-display-en);
+  --font-body:       var(--pf-font-body);
+  --font-mono:       var(--pf-font-mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   공유 스케일·리듬·모션 (시안 불변 — 스펙 §0)
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* 타입 스케일 (rem 기반 — 사용자 폰트 확대 존중) */
+  --fz-xxs:     0.75rem;   /* 12 — 캡션·라벨 */
+  --fz-xs:      0.8125rem; /* 13 — 메타 */
+  --fz-sm:      0.875rem;  /* 14 — 보조 */
+  --fz-md:      1rem;      /* 16 — 본문 기본 */
+  --fz-lg:      1.125rem;  /* 18 — 리드 */
+  --fz-xl:      1.25rem;   /* 20 — 소제목 */
+  --fz-h3:      1.5rem;    /* 24 */
+  --fz-h2:      1.75rem;   /* 28 */
+  --fz-h1:      2rem;      /* 32 */
+  --fz-display: clamp(2.5rem, 6vw, 5rem); /* 히어로 */
+
+  /* 레이아웃 (계약: .wrap max-width 1200px) */
+  --wrap-max: 1200px;
+  --gutter:   clamp(20px, 4vw, 64px);
+
+  /* 모션 이징 (bchiang7 계열) */
+  --ease:      cubic-bezier(0.645, 0.045, 0.355, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);   /* 마스크 리빌 */
+  --dur:       0.25s;
+  --transition: all var(--dur) var(--ease);
+
+  /* 모노캡스 트래킹 (letter-spacing) — 라벨/키커 일관 값. base .k 는 --tk-kicker 채택.
+     컴포넌트 인라인 라벨(Hero badge/Nav/Contact open-label)은 각 소유자가 선택 채택.
+     마퀴 밴드 0.28em 는 장식 예외로 각 컴포넌트가 별도 유지(토큰 밖). */
+  --tk-inline: 0.16em;   /* 인라인 라벨(배지·nav·open-label 등) */
+  --tk-kicker: 0.22em;   /* 섹션 눈썹 키커(.k) */
+}

@@ -1,0 +1,77 @@
+---
+// FigInductionHead.astro — TRIH §6 트랜스포머 induction head 개념도
+//   토큰 시퀀스 [A][B]…[A] 에서 "이전 A 다음의 B"를 어텐션 아크로 되짚어 [B] 예측.
+//   2-레이어 회로(previous-token head → induction head) 표시.
+//   패턴 준수: viewBox 0 0 400 300 · 색 전량 var() 토큰 · uid 프리픽스 충돌 방지.
+interface Props { class?: string }
+const { class: className = '' } = Astro.props;
+const uid = 'fih-' + Math.random().toString(36).slice(2, 8);
+
+// 토큰 시퀀스 — [A][B][C][D][A][?]
+const tokens = [
+  { t: 'A', accent: true }, { t: 'B', accent: false }, { t: 'C', accent: false },
+  { t: 'D', accent: false }, { t: 'A', accent: true }, { t: '?', accent: false, pred: true },
+];
+const x0 = 46, gap = 60, boxW = 40, boxY = 176;
+---
+<svg viewBox="0 0 400 300" class={`pf-fig ${className}`} role="img"
+     aria-label="Induction head — 토큰 시퀀스 [A][B]…[A] 에서 어텐션이 이전 A 다음의 B를 되짚어 다음 토큰을 B로 예측하는 2-레이어 회로"
+     focusable="false" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id={`${uid}-g`} x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" style="stop-color:var(--accent);stop-opacity:.12" />
+      <stop offset="100%" style="stop-color:var(--surface);stop-opacity:0" />
+    </linearGradient>
+    <marker id={`${uid}-ar`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0,0 L 10,5 L 0,10 z" fill="var(--accent)" />
+    </marker>
+  </defs>
+  <rect width="400" height="300" fill="var(--surface)" />
+  <rect width="400" height="300" fill={`url(#${uid}-g)`} />
+
+  {/* 2-레이어 회로 표시 */}
+  <g style="font-family:var(--font-mono)" font-size="8" opacity="0.8">
+    <rect x="30" y="60" width="340" height="22" rx="3" fill="none" stroke="var(--ink-3)" stroke-width="0.7" opacity="0.5" />
+    <text x="40" y="75" fill="var(--ink-3)">layer 1 · previous-token head</text>
+    <rect x="30" y="92" width="340" height="22" rx="3" fill="none" stroke="var(--accent)" stroke-width="0.9" opacity="0.7" />
+    <text x="40" y="107" fill="var(--accent)">layer 2 · induction head</text>
+  </g>
+
+  {/* 어텐션 아크 — 두 번째 A(index 4) → 첫 B(index 1) 되짚기 */}
+  <path d={`M ${x0 + 4 * gap + boxW / 2},${boxY} C ${x0 + 4 * gap},108 ${x0 + gap},108 ${x0 + gap + boxW / 2},${boxY}`}
+        fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end={`url(#${uid}-ar)`}
+        opacity="0.85" class="fih-arc" />
+  <text x={x0 + 2.5 * gap + boxW / 2} y="120" text-anchor="middle" fill="var(--accent)" font-size="9" opacity="0.9"
+        style="font-family:var(--font-display-en);font-style:italic">match prev A → copy its B</text>
+
+  {/* 예측 아크 — 첫 B → ? (예측 토큰) */}
+  <path d={`M ${x0 + gap + boxW / 2},${boxY + 44} C ${x0 + 2.6 * gap},248 ${x0 + 4.4 * gap},248 ${x0 + 5 * gap + boxW / 2},${boxY + 44}`}
+        fill="none" stroke="var(--violet, #6b5cc4)" stroke-width="1.3" stroke-dasharray="4 4"
+        marker-end={`url(#${uid}-ar)`} opacity="0.7" />
+  <text x={x0 + 3 * gap + boxW / 2} y="262" text-anchor="middle" fill="var(--violet, #6b5cc4)" font-size="9" opacity="0.85"
+        style="font-family:var(--font-display-en);font-style:italic">predict ? = B</text>
+
+  {/* 토큰 박스 */}
+  {tokens.map((tk, i) => (
+    <g>
+      <rect x={x0 + i * gap} y={boxY} width={boxW} height={boxW} rx="4"
+            fill={tk.pred ? 'var(--accent-tint, transparent)' : 'none'}
+            stroke={tk.accent ? 'var(--accent)' : (tk.pred ? 'var(--violet, #6b5cc4)' : 'var(--ink-3)')}
+            stroke-width={tk.accent || tk.pred ? 1.6 : 1}
+            stroke-dasharray={tk.pred ? '4 3' : undefined}
+            opacity={tk.accent || tk.pred ? 1 : 0.65} />
+      <text x={x0 + i * gap + boxW / 2} y={boxY + boxW / 2 + 6} text-anchor="middle"
+            fill={tk.accent ? 'var(--accent)' : (tk.pred ? 'var(--violet, #6b5cc4)' : 'var(--ink-2)')}
+            font-size="18" style="font-family:var(--font-mono);font-weight:500">{tk.t}</text>
+    </g>
+  ))}
+
+  <text x="200" y="290" text-anchor="middle" fill="var(--ink-3)" font-size="8.5" opacity="0.75"
+        style="font-family:var(--font-mono);letter-spacing:1.5px">induction head — [A][B]…[A] → ?</text>
+</svg>
+<style>
+  .pf-fig{display:block;width:100%;height:100%}
+  .fih-arc{stroke-dasharray:3 4;animation:fih-dash 20s linear infinite}
+  @keyframes fih-dash{to{stroke-dashoffset:-700}}
+  @media (prefers-reduced-motion: reduce){.fih-arc{animation:none !important;stroke-dasharray:none}}
+</style>

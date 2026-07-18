@@ -1,0 +1,160 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// BaseLayout.astro — 전 페이지 공통 셸 (계약 시그니처)
+//   props = { locale, variant?, title, description }
+//   · data-variant = 디자인 시스템 (빌드타임 prop → <html> 서버 렌더, FOUC 없음)
+//   · data-theme   = 색 모드 (defaultTheme 서버 렌더 → 인라인 스크립트가 localStorage 로 교정)
+// ═══════════════════════════════════════════════════════════════════════════
+import '../styles/tokens.css';
+import '../styles/base.css';
+// 시안 CSS 전량 eager 번들 — 각 파일은 :root[data-variant] 로 스코프되어 활성 시안만 실제
+// 적용된다(무수정 전환). 정적 import 로 명시(바레 import.meta.glob 표현식문은 트리셰이크 시
+// dangling 참조를 남겨 런타임 ReferenceError 를 일으킴 — 명시 import 가 결정적·안전).
+import '../styles/variants/minimal.css';
+import '../styles/variants/tradition.css';
+import '../styles/variants/selfref.css';
+import '../styles/variants/classic.css';
+import '../styles/variants/v2evolved.css';
+
+import { getVariant, DEFAULT_VARIANT, type VariantId } from '../config/variants';
+import { withBase } from '../lib/url';
+import Seo, { type ScholarlyArticleInput } from '../components/seo/Seo.astro';
+import Nav from '../components/nav/Nav.astro';
+import Footer from '../components/nav/Footer.astro';
+
+interface Props {
+  locale: 'ko' | 'en';
+  variant?: VariantId;
+  title: string;
+  description: string;
+  /* ── SEO passthrough — Seo.astro 로 전달 (미지정 시 Seo 기본값) ── */
+  /** JSON-LD 스위치: person(기본) | scholarly | both (/research 논문 페이지) */
+  schema?: 'person' | 'scholarly' | 'both';
+  /** schema 에 scholarly 포함 시 필수 — ScholarlyArticle 필드 */
+  article?: ScholarlyArticleInput;
+  /** true 면 noindex (preview 등 색인 제외) */
+  noindex?: boolean;
+  /** ko/en hreflang 방출 여부(기본 true). en 대응 없는 페이지는 false */
+  alternate?: boolean;
+}
+
+const { locale, variant, title, description, schema, article, noindex, alternate } = Astro.props;
+const def = getVariant(variant ?? DEFAULT_VARIANT);
+const variantId = def.id;
+const defaultTheme = def.defaultTheme;
+
+// 시안별 브라우저 크롬 색 — 각 시안 페이지 배경(variants CSS의 --pf 페이지 bg)과 일치
+const THEME_COLOR: Record<string, string> = {
+  minimal: '#FAF6EC',
+  tradition: '#EDE4D0',
+  selfref: '#05060A',
+  classic: '#FBFAF6',
+  v2evolved: '#FAF7F2',
+};
+// 폴백 '#FAF6EC'(minimal 한지)는 안전망일 뿐 — 5개 시안 모두 THEME_COLOR 키에 존재하므로
+// 실제로는 발동하지 않는다(배포 기본 시안은 v2evolved → '#FAF7F2').
+const themeColor = THEME_COLOR[variantId] ?? '#FAF6EC';
+---
+
+<!doctype html>
+<html lang={locale} data-variant={variantId} data-theme={defaultTheme}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content={themeColor} />
+    <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+
+    <!-- SEO 단일 소스 — title/description/canonical/OG/Twitter/JSON-LD/hreflang 방출 -->
+    <Seo
+      title={title}
+      description={description}
+      locale={locale}
+      schema={schema}
+      article={article}
+      noindex={noindex}
+      alternate={alternate}
+    />
+
+
+    <!-- 서체: Pretendard(한글 본문) — jsdelivr dynamic-subset CDN.
+         커스텀 폰트 파일 다운로드는 추후 self-host 단계로 유보(규칙 ⑤). -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+
+    {/* v2evolved 전용 웹폰트 — 대형 200웨이트 명조(Noto Serif KR)가 이 시안의 시그니처
+        핵심. 조건 로드라 다른 4시안 성능 영향 0. Playfair Display(라틴 방주)·JetBrains Mono 동반. */}
+    {variantId === 'v2evolved' && (
+      <>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap"
+        />
+      </>
+    )}
+
+    <!-- FOUC 방지 — 페인트 전에 js 클래스 부여 + 저장된 색모드 복원 (is:inline: Vite 미번들, head 선실행) -->
+    <script is:inline>
+      (function () {
+        var el = document.documentElement;
+        el.classList.add('js'); // .reveal 숨김 허용 (no-JS 는 항상 보임)
+        try {
+          var v = el.getAttribute('data-variant');
+          var stored = localStorage.getItem('pf-theme-' + v);
+          if (stored === 'light' || stored === 'dark') {
+            el.setAttribute('data-theme', stored);
+          }
+        } catch (e) {
+          /* localStorage 차단 환경 — 서버 기본 테마 유지 */
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">건너뛰기 / Skip to content</a>
+
+    <Nav locale={locale} localeAlternate={alternate} />
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <Footer locale={locale} />
+
+    <!-- 리빌 IO 폴백 — 네이티브 scroll-driven 미지원 브라우저용.
+         지원 브라우저에선 CSS animation-timeline 이 이미 구동하므로 .is-in 은 무해. -->
+    <script>
+      const supportsSDA = CSS.supports('animation-timeline', 'view()');
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const nodes = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
+
+      if (supportsSDA || reduce) {
+        // 네이티브가 구동하거나 모션 비활성 — 즉시 표시 클래스만 부여
+        nodes.forEach((n) => n.classList.add('is-in'));
+      } else {
+        // IO 폴백: 뷰포트 진입 시 .is-in 부여 후 관측 해제
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                (e.target as HTMLElement).classList.add('is-in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.08, rootMargin: '0px 0px -6% 0px' }
+        );
+        nodes.forEach((n, i) => {
+          n.style.setProperty('--i', String(Math.min(i % 5, 4))); // 스태거
+          io.observe(n);
+        });
+      }
+    </script>
+  </body>
+</html>

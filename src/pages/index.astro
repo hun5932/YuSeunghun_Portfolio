@@ -1,0 +1,18 @@
+---
+// index.astro — 한국어 홈 (기본 로케일, prefixDefaultLocale:false → '/').
+// 섹션 조립은 Home 컴포넌트가 담당(DRY) — en/index·preview 와 공유.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Home from '../components/Home.astro';
+import facts from '../data/facts.json';
+
+const locale = 'ko' as const;
+const title = `${facts.profile.name.ko} — ${facts.profile.headline.ko}`;
+const description =
+  'AI 서비스 기획자·금융 클라우드 운영자·TRIH 연구자. 환원에서 자기참조를 거쳐 창발로 가는 하나의 사고법으로 네 도메인을 가로지릅니다.';
+
+// DEFAULT_VARIANT(v2evolved) 로 렌더 — variant prop 생략 시 BaseLayout 이 기본값 적용.
+---
+
+<BaseLayout locale={locale} title={title} description={description}>
+  <Home locale={locale} />
+</BaseLayout>
