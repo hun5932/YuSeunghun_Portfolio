@@ -1,0 +1,103 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// MarqueeBand.astro — v2 도메인 태그 무한 마퀴 밴드 (v2evolved 시안 전용)
+//   출처: _reference/index_v2_live.html L500-524 (marquee / domain tags)
+//   · 태그는 고유명사·기술어 → 로케일 무관 그대로 유지(locale prop 은 계약상 수용).
+//   · 표시는 CSS 게이트: 기본 display:none → [data-variant="v2evolved"] 에서만 display:block.
+//     (조건 prop 배관 없이 어느 시안에서 렌더돼도 v2evolved 에서만 보인다 = 격리.)
+//   · 루트에 .sec 를 병기 → 인접 형제 border(.sec + .sec)의 연쇄를 끊지 않아
+//     Hero↔Measured 사이 헤어라인이 다른 4시안에서 그대로 유지된다(영향 0).
+//   · 애니 키프레임 v2e-marquee(translateX -50%, 50s)는 v2evolved.css 가 공급.
+// ═══════════════════════════════════════════════════════════════════════════
+import type { Locale } from '../../i18n/ui';
+
+interface Props { locale?: Locale }
+// locale 은 계약상 수용(태그가 고유명사라 현재 분기 없음) — 미사용 경고 방지 위해 구조분해만.
+const { locale: _locale = 'ko' } = Astro.props;
+
+// ★ = 옻칠골드(accent), ∞ = 나전보라(loop). v2 원본 순서 그대로.
+const tags = [
+  { sym: '★', text: 'Prompt Engineering' },
+  { sym: '∞', text: 'LangChain · RAG' },
+  { sym: '★', text: 'Service Planning' },
+  { sym: '∞', text: 'Mechanistic Interpretability' },
+  { sym: '★', text: 'SLA · ITSM Ops' },
+  { sym: '∞', text: 'Ontology Design' },
+  { sym: '★', text: 'Knowledge Graph' },
+  { sym: '∞', text: 'Cross-Domain Synthesis' },
+];
+---
+
+<aside class="marquee-band sec" aria-label="Focus areas">
+  <div class="marquee-track">
+    <div class="marquee-group">
+      {tags.map((t) => (
+        <span class="marquee-item">
+          <span class={t.sym === '★' ? 'marquee-sym gold' : 'marquee-sym loop'}>{t.sym}</span>
+          {t.text}
+        </span>
+      ))}
+    </div>
+    <div class="marquee-group" aria-hidden="true">
+      {tags.map((t) => (
+        <span class="marquee-item">
+          <span class={t.sym === '★' ? 'marquee-sym gold' : 'marquee-sym loop'}>{t.sym}</span>
+          {t.text}
+        </span>
+      ))}
+    </div>
+  </div>
+</aside>
+
+<style>
+  /* ─── CSS 게이트 — 기본 은폐(다른 4시안), v2evolved 에서만 표시 ───
+     .sec 를 병기했지만 밴드는 슬림해야 하므로 섹션 패딩을 여기서 무효화·재정의한다. */
+  .marquee-band {
+    display: none;
+    padding-block: 1.35rem;
+    overflow: hidden;   /* 미지원 브라우저의 하드컷 폴백(마스크 미적용 시 기존 동작 유지) */
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
+    border-block: 1px solid var(--border-soft);
+    /* 좌우 edge 페이드 — 알파만 사용(한지 라이트/다크 무관 안전). 미지원은 overflow:hidden 하드컷 폴백. */
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  :global(:root[data-variant="v2evolved"]) .marquee-band {
+    display: block;
+  }
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    /* 키프레임 v2e-marquee 는 v2evolved.css(전역)가 공급 — 밴드가 보이는 v2evolved 에서만 구동 */
+    animation: v2e-marquee 50s linear infinite;
+  }
+  .marquee-group {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    padding-right: 3rem;   /* 그룹 이음새에서도 간격 유지 → 이음매 없는 루프 */
+    flex: none;
+  }
+  .marquee-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .marquee-sym { font-size: 1em; line-height: 1; }
+  .marquee-sym.gold { color: var(--accent); }
+  .marquee-sym.loop { color: var(--violet, var(--accent)); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none !important; }
+  }
+  @media print {
+    .marquee-band { display: none !important; }
+  }
+</style>

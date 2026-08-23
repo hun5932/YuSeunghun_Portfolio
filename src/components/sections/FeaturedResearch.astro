@@ -1,0 +1,835 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// FeaturedResearch.astro — 홈 단일 페이지의 Featured Research(TRIH) 섹션 (id=research)
+//   구성: 라벨+제목+안내문 → 3단계 STAGE 카드(환원/자기참조/창발)
+//         → 케이스 색인(좌 CASE 1~4 tablist / 우 도판+설명 tabpanel, fade 130ms 크로스페이드)
+//         → 논문 메타 행(분량·공개·다음 — facts.json THE 계열 claim)
+//   · 전면 한지 라이트 단일 톤 · 시맨틱 토큰만 사용(--ink/--accent/--surface/--border …)
+//   · trih 컬렉션(escher/bach/godel/transformer) 재사용 — "형식 평행"·삼중 실증 표현 그대로.
+//   · 구조 도판(케이스별): bach→FigCrabCanon · godel→FigGodelNumbering · transformer→FigInductionHead 재사용,
+//       escher→ 컴포넌트 내부 인라인 드로스테 미니(중첩 액자 5층, 「판화 갤러리」 자기포함 구조) SVG 신규.
+//   · /research 페이지·ResearchTrack 은 건드리지 않는다(독립 섹션).
+// ═══════════════════════════════════════════════════════════════════════════
+import { getCollection } from 'astro:content';
+import { t, type Locale } from '../../i18n/ui';
+import facts from '../../data/facts.json';
+import FigCrabCanon from '../svg/FigCrabCanon.astro';
+import FigGodelNumbering from '../svg/FigGodelNumbering.astro';
+import FigInductionHead from '../svg/FigInductionHead.astro';
+import TrihInspector from '../islands/TrihInspector.astro';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const ko = locale === 'ko';
+// 키가 부족한 마이크로카피는 컴포넌트 내 리터럴로 해결(ui.ts 수정 금지).
+const pick = (k: string, e: string) => (ko ? k : e);
+
+// ── 케이스 데이터 — trih 컬렉션(no 오름차순)을 도판·섹션 태그와 결합 ──
+const nodes = (await getCollection('trih')).sort((a, b) => a.data.no - b.data.no);
+// key → 재사용 구조 도판 컴포넌트(escher 제외 — 아래 인라인 드로스테로 렌더) · 논문 섹션 번호.
+const figByKey = {
+  bach: FigCrabCanon,
+  godel: FigGodelNumbering,
+  transformer: FigInductionHead,
+} as const;
+const secByKey: Record<string, string> = { escher: '§3', bach: '§4', godel: '§5', transformer: '§6' };
+
+// ── 케이스 심화 데이터 — v2 케이스 색인 밀도 계승(플레이트 문구·계열·전거·3단계 불릿).
+//    ui.ts 불변 원칙 → 전량 컴포넌트 내 pick 리터럴(ko/en 병기). 수치·표기는 facts/컬렉션 정합. ──
+type Bullet = { k: string; t: string };
+const enrich: Record<string, { plate: string; category: string; works: string; bullets: Bullet[] }> = {
+  escher: {
+    plate: pick('그림 속의 그림', 'the picture inside the picture'),
+    category: pick('시각 자기참조', 'Visual Self-Reference'),
+    works: pick('「그리는 손」(1948) · 「판화 갤러리」(1956) · 「원형 극한」 연작', 'Drawing Hands (1948) · Print Gallery (1956) · Circle Limit series'),
+    bullets: [
+      { k: pick('환원', 'Reduction'), t: pick('평면결정군(대칭 규칙) · 쌍곡 거리(원형 극한)', 'Wallpaper groups (symmetry) · hyperbolic distance') },
+      { k: pick('자기참조', 'Self-reference'), t: pick('그림이 자기 자신을 포함하는 재귀 구조', 'A picture that recursively contains itself') },
+      { k: pick('창발', 'Emergence'), t: pick('시각적 무한 · 불가능 도형', 'Visual infinity · impossible figures') },
+    ],
+  },
+  bach: {
+    plate: pick('시간 속의 회문', 'palindrome in time'),
+    category: pick('청각 자기참조', 'Auditory Self-Reference'),
+    works: pick('BWV 1079 「음악의 헌정」 · BWV 1080 「푸가의 기법」', 'BWV 1079 Musical Offering · BWV 1080 Art of Fugue'),
+    bullets: [
+      { k: pick('환원', 'Reduction'), t: pick('대위법 규칙 · 음정 관계', 'Counterpoint rules · pitch relations') },
+      { k: pick('자기참조', 'Self-reference'), t: pick('시간 회문 · 무한 상승 · 이름의 박힘 · 주제의 자기 마주침', 'Time palindrome · endless rising · name embedded · a theme meeting itself') },
+      { k: pick('창발', 'Emergence'), t: pick('청각적 무한 · 음악적 시간 구조 (트랜스포머 마스크와 형식 평행)', 'Auditory infinity · musical time (a formal parallel to the Transformer mask)') },
+    ],
+  },
+  godel: {
+    plate: pick('자기 이름을 부르는 명제', 'the sentence that names itself'),
+    category: pick('논리 자기참조', 'Logical Self-Reference'),
+    works: pick('괴델(1931) · 튜링(1936)', 'Gödel (1931) · Turing (1936)'),
+    bullets: [
+      { k: pick('환원', 'Reduction'), t: pick('『수학원리』 형식체계 · 자연수 산술', 'Principia formal system · natural-number arithmetic') },
+      { k: pick('자기참조', 'Self-reference'), t: pick('괴델 넘버링 → ⌜G⌝ · 프로그램의 자기적용', 'Gödel numbering → ⌜G⌝ · a program applied to itself') },
+      { k: pick('창발', 'Emergence'), t: pick('불완전성 · 정지 문제 ≅ G · 메타-진리', 'Incompleteness · halting problem ≅ G · meta-truth') },
+    ],
+  },
+  transformer: {
+    plate: pick('자기 자신과 과거만 보는 인과 마스크', 'causal mask: attends only to itself and its past'),
+    category: pick('계산 자기참조', 'Computational Self-Reference'),
+    works: pick('Vaswani 2017 · Olsson 2022 · Wei 2022 · Templeton 2024 · Anthropic 2025', 'Vaswani 2017 · Olsson 2022 · Wei 2022 · Templeton 2024 · Anthropic 2025'),
+    bullets: [
+      { k: pick('환원', 'Reduction'), t: pick('Q·K·V 행렬 · 토큰 임베딩', 'Q·K·V matrices · token embeddings') },
+      { k: pick('자기참조', 'Self-reference'), t: pick('induction heads · 단의적 특징 · 귀속 그래프 (삼중 실증)', 'induction heads · monosemantic features · attribution graphs (triple evidence)') },
+      { k: pick('창발', 'Emergence'), t: pick('Emergent Abilities · 임계 규모 이후의 새 능력', 'Emergent abilities · new capabilities beyond a threshold scale') },
+    ],
+  },
+};
+
+const cases = nodes.map((n) => {
+  const key = n.data.key as string;
+  return {
+    key,
+    no: String(n.data.no).padStart(2, '0'),
+    sec: secByKey[key] ?? '',
+    domain: n.data.domain[locale],
+    figure: n.data.figure[locale],
+    tag: n.data.tag,
+    mechanism: n.data.mechanism[locale],
+    detail: n.data.detail[locale],
+    // 심화 필드(플레이트·계열·전거·3단계 불릿)
+    ...enrich[key],
+    // escher 는 Fig 없이(undefined) — 템플릿에서 인라인 드로스테 SVG 분기.
+    Fig: (figByKey as Record<string, (typeof figByKey)[keyof typeof figByKey]>)[key],
+  };
+});
+
+// ── 3단계 STAGE 카드 — 제목은 research.stage* 키, 설명은 리터럴(v1 도판 서사 계승) ──
+const stages = [
+  {
+    no: '01',
+    title: t(locale, 'research.stage1'),
+    desc: pick(
+      '복잡성을 가장 단순한 기본 요소 — 픽셀 · 음정 · 기호 · 토큰 — 로 환원합니다.',
+      'Complexity is reduced to its simplest units — pixels, pitches, symbols, tokens.',
+    ),
+  },
+  {
+    no: '02',
+    title: t(locale, 'research.stage2'),
+    desc: pick(
+      '환원된 단위가 자기 자신을 가리키는 회로(이상한 고리)를 형성합니다.',
+      'The reduced units form a circuit that points back at itself — a strange loop.',
+    ),
+  },
+  {
+    no: '03',
+    title: t(locale, 'research.stage3'),
+    desc: pick(
+      '자기참조가 임계 복잡도를 넘으면 환원할 수 없는 새 위계가 창발합니다.',
+      'Once self-reference crosses a critical complexity, an irreducible new hierarchy emerges.',
+    ),
+  },
+];
+
+// ── 논문 메타 행 — facts.json THE 계열 claim(정본 수치) ──
+const c = facts.claims as Record<string, { ko: string; en: string }>;
+const meta = [
+  { label: pick('분량', 'Scale'), value: c['THE-04'][locale] },
+  { label: pick('공개', 'Published'), value: c['THE-02'][locale] },
+  { label: pick('다음', 'Next'), value: c['THE-03'][locale] },
+];
+const doiHref = facts.profile.links.zenodo;
+
+// ── escher 인라인 구조 도판(드로스테 미니) — 「판화 갤러리」식 자기포함 중첩 액자 5층 ──
+//   그림이 자기 자신을 포함하는 재귀 구조를 중첩 프레임의 나선 축소로 표현. 색 전량 토큰.
+const drosteUid = 'fd-' + Math.random().toString(36).slice(2, 8);
+const drosteLayers = Array.from({ length: 5 }, (_, i) => {
+  const s = Math.pow(0.66, i); // 안쪽으로 갈수록 축소
+  const w = 300 * s;
+  const h = 225 * s;
+  return {
+    w,
+    h,
+    x: 200 - w / 2,
+    y: 150 - h / 2,
+    rot: i * 11, // 드로스테 나선 회전
+    stroke: i % 2 ? 'var(--violet, #6b5cc4)' : 'var(--accent)',
+    sw: Math.max(0.9, 1.7 * Math.pow(0.85, i)),
+    op: 0.9 - i * 0.12,
+  };
+});
+
+// 인라인 마이크로카피
+const M = {
+  mapK: pick('4영역 개관 — 자기참조 매핑', 'Four-domain overview — self-reference map'),
+  mapTitle: pick('노드를 눌러 구조를 살펴보세요', 'Inspect the structure node by node'),
+  caseK: pick('케이스 색인 · 심화', 'Case index · deep-dive'),
+  caseTitle: pick('네 영역, 하나의 이상한 고리', 'Four domains, one strange loop'),
+  caseIntro: pick(
+    '케이스 심화 — 위 개관에서 고른 네 노드를 대형 도판·전거·3단계 스키마(환원 → 자기참조 → 창발)와 함께 자세히 봅니다.',
+    'Case deep-dive — the four nodes from the overview above, seen in full: a large figure, its sources and the three-stage schema (reduction → self-reference → emergence).',
+  ),
+  listLabel: pick('TRIH 4영역 케이스', 'TRIH four-domain cases'),
+  paperK: pick('논문 기록', 'Paper record'),
+  doi: pick('Zenodo DOI 보기', 'View Zenodo DOI'),
+  hint: pick('선택하면 도판이 바뀝니다 · ↑↓ 키 지원', 'Select to change the figure · ↑↓ keys supported'),
+  // 메타그리드 라벨(전거/계열/영역/위치)
+  lblDomain: pick('영역', 'Domain'),
+  lblSection: pick('위치', 'Section'),
+  lblCategory: pick('계열', 'Category'),
+  lblSources: pick('전거', 'Sources'),
+};
+---
+
+<section id="research" class="sec featured-research" aria-labelledby="fr-title">
+  <div class="wrap">
+    {/* ── 비학술 채용 동선용 스킵 앵커 — 학술 블록을 건너뛰고 실무 이력·연락으로 ── */}
+    <a class="fr-skip-lead reveal" href="#timeline">
+      <span>{pick('실무 이력·연락은 아래로', 'Prefer work history & contact? Skip ahead')}</span>
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true" width="12" height="12"><path d="M6 2v8M2.5 6.5 6 10l3.5-3.5" /></svg>
+    </a>
+
+    {/* ── 라벨 + 제목 + 안내문 ── */}
+    <header class="fr-head reveal">
+      <span class="k">{t(locale, 'research.label')}</span>
+      <h2 id="fr-title" class="d2 fr-title">{t(locale, 'research.title')}</h2>
+      <p class="fr-intro">{t(locale, 'research.intro')}</p>
+    </header>
+
+    {/* ── 3단계 STAGE 카드 ── */}
+    <ol class="fr-stages">
+      {stages.map((s, i) => (
+        <li class="fr-stage card reveal" style={`--i:${i}`}>
+          <span class="fr-stage-no mono">STAGE {s.no}</span>
+          <h3 class="fr-stage-title">{s.title}</h3>
+          <p class="fr-stage-desc">{s.desc}</p>
+        </li>
+      ))}
+    </ol>
+
+    {/* ── 4영역 자기참조 매핑 인스펙터 (클릭형 4노드 + LIVE INSPECTOR) ── */}
+    <div class="fr-map-head reveal">
+      <span class="k">{M.mapK}</span>
+      <h3 class="fr-index-title">{M.mapTitle}</h3>
+    </div>
+    <div class="fr-map reveal">
+      <TrihInspector items={nodes} locale={locale} />
+    </div>
+
+    {/* ── 케이스 색인 (좌 tablist / 우 tabpanel) ── */}
+    <div class="fr-index-head reveal">
+      <span class="k">{M.caseK}</span>
+      <h3 class="fr-index-title">{M.caseTitle}</h3>
+      <p class="fr-index-intro">{M.caseIntro}</p>
+    </div>
+
+    <div class="fr-index reveal" data-fr-index>
+      {/* 좌: CASE 리스트 (세로 tablist) */}
+      <div class="fr-list" role="tablist" aria-label={M.listLabel} aria-orientation="vertical">
+        {cases.map((cs, i) => (
+          <button
+            type="button"
+            role="tab"
+            id={`fr-tab-${cs.key}`}
+            class="fr-row"
+            data-key={cs.key}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            aria-controls={`fr-panel-${cs.key}`}
+            tabindex={i === 0 ? 0 : -1}
+          >
+            <span class="fr-row-n mono">CASE {i + 1}</span>
+            <span class="fr-row-body">
+              <span class="fr-row-figure">{cs.figure}</span>
+              <span class="fr-row-domain">{cs.domain}</span>
+            </span>
+            <span class="fr-row-sec mono" aria-hidden="true">{cs.sec}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* 우: 도판 + 설명 패널 (오버레이 그리드 → 높이 고정, 점프 방지) */}
+      <div class="fr-pane">
+        {cases.map((cs, i) => (
+          <div
+            role="tabpanel"
+            id={`fr-panel-${cs.key}`}
+            class={`fr-panel${i === 0 ? ' is-active' : ''}`}
+            data-panel={cs.key}
+            aria-labelledby={`fr-tab-${cs.key}`}
+          >
+            <figure class="fr-fig">
+              <div class="fr-fig-frame">
+              <div class="fr-fig-media">
+                {cs.key === 'escher' ? (
+                  <svg
+                    viewBox="0 0 400 300"
+                    class="fr-droste"
+                    role="img"
+                    aria-label="Print Gallery — 그림이 자기 자신을 포함하는 중첩 액자 구조: 안쪽으로 갈수록 축소·회전하는 드로스테 프레임과 자기지시 고리"
+                    focusable="false"
+                    preserveAspectRatio="xMidYMid slice"
+                  >
+                    <defs>
+                      <linearGradient id={`${drosteUid}-g`} x1="0" x2="1" y1="0" y2="1">
+                        <stop offset="0%" style="stop-color:var(--accent);stop-opacity:.13" />
+                        <stop offset="100%" style="stop-color:var(--violet, #6b5cc4);stop-opacity:.09" />
+                      </linearGradient>
+                      <marker id={`${drosteUid}-ar`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                        <path d="M 0,0 L 10,5 L 0,10 z" fill="var(--accent)" />
+                      </marker>
+                    </defs>
+                    <rect width="400" height="300" fill="var(--surface)" />
+                    <rect width="400" height="300" fill={`url(#${drosteUid}-g)`} />
+
+                    {/* 중첩 액자 5층 — 그림이 자기 자신을 포함(판화 갤러리) */}
+                    {drosteLayers.map((L) => (
+                      <rect
+                        x={L.x}
+                        y={L.y}
+                        width={L.w}
+                        height={L.h}
+                        rx="3"
+                        fill="none"
+                        stroke={L.stroke}
+                        stroke-width={L.sw}
+                        opacity={L.op}
+                        transform={`rotate(${L.rot} 200 150)`}
+                      />
+                    ))}
+
+                    {/* 중심 — 그림 속 관찰자(자기 자신을 보는 인물) */}
+                    <circle cx="200" cy="150" r="4.5" fill="var(--accent)" opacity="0.9" />
+
+                    {/* 자기지시 고리 — 중심을 감아 다시 자신으로 되돌아오는 호(arc) */}
+                    <path
+                      d="M 223,110 A 46 46 0 1 1 177,110"
+                      fill="none"
+                      stroke="var(--accent)"
+                      stroke-width="1.3"
+                      stroke-dasharray="4 5"
+                      opacity="0.7"
+                      marker-end={`url(#${drosteUid}-ar)`}
+                      class="fr-droste-loop"
+                    />
+
+                    <text x="52" y="34" fill="var(--accent)" font-size="10" opacity="0.85"
+                          style="font-family:var(--font-display-en);font-style:italic;letter-spacing:2px">Print Gallery</text>
+                    <text x="200" y="286" text-anchor="middle" fill="var(--ink-3)" font-size="8.5" opacity="0.75"
+                          style="font-family:var(--font-mono);letter-spacing:1.5px">a picture that contains itself</text>
+                  </svg>
+                ) : (
+                  <cs.Fig />
+                )}
+              </div>
+              <figcaption class="fr-fig-cap mono">
+                <span class="fr-fig-plate">CASE {i + 1} — {cs.plate}</span>
+                <span class="fr-fig-coord">{cs.sec} · {cs.figure} · {cs.domain}</span>
+              </figcaption>
+              </div>
+            </figure>
+            <div class="fr-panel-body">
+              <div class="fr-panel-tags">
+                <span class="fr-panel-tag mono">{cs.tag}</span>
+                <span class="fr-panel-cat mono">{cs.category}</span>
+              </div>
+              <p class="fr-panel-mech mono">{cs.mechanism}</p>
+              <p class="fr-panel-detail">{cs.detail}</p>
+
+              {/* 3단계 스키마 불릿 — 환원 · 자기참조 · 창발 */}
+              <ul class="fr-panel-bullets">
+                {cs.bullets.map((b) => (
+                  <li class="fr-panel-bullet">
+                    <span class="fr-bullet-k mono">{b.k}</span>
+                    <span class="fr-bullet-t">{b.t}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* 메타그리드 — 영역 · 위치 · 계열 · 전거 */}
+              <dl class="fr-panel-meta">
+                <div class="fr-pm-item">
+                  <dt class="mono">{M.lblDomain}</dt>
+                  <dd>{cs.domain}</dd>
+                </div>
+                <div class="fr-pm-item">
+                  <dt class="mono">{M.lblSection}</dt>
+                  <dd>{cs.sec}</dd>
+                </div>
+                <div class="fr-pm-item">
+                  <dt class="mono">{M.lblCategory}</dt>
+                  <dd>{cs.category}</dd>
+                </div>
+                <div class="fr-pm-item fr-pm-wide">
+                  <dt class="mono">{M.lblSources}</dt>
+                  <dd>{cs.works}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <p class="fr-hint">{M.hint}</p>
+
+    {/* ── 논문 메타 행 ── */}
+    <div class="fr-paper reveal">
+      <span class="k">{M.paperK}</span>
+      <dl class="fr-meta">
+        {meta.map((m) => (
+          <div class="fr-meta-item">
+            <dt class="fr-meta-label mono">{m.label}</dt>
+            <dd class="fr-meta-value">{m.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <a class="fr-doi" href={doiHref} target="_blank" rel="noopener noreferrer">
+        <span>{M.doi}</span>
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true" width="12" height="12"><path d="M4 2h6v6M10 2L3 9" /></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ── 옅은 톤 밴드 (교대 배치 리듬 — 사용자 결정 2026-07-19) ──
+     딥톤(--surface-2)이 아닌 한 단계 옅은 --surface 로 은은한 톤차만.
+     Timeline·Resume(이력 묶음)과 격섹션 교대해 스크롤 리듬 형성.
+     내부 카드/패널은 --bg 로 승격해 배경 동화 방지. */
+  .featured-research {
+    background: var(--surface); /* color-mix 미지원 구형 폴백 */
+    background: color-mix(in srgb, var(--surface) 45%, var(--bg)); /* 반 단계 더 옅게 */
+  }
+  .featured-research .fr-stage,
+  .featured-research .fr-row,
+  .featured-research .fr-panel,
+  .featured-research .fr-fig-frame,
+  .featured-research .fr-fig-media { background: var(--bg); }
+  .featured-research .fr-row[aria-selected='true'] { background: var(--accent-tint); }
+
+  /* ── 스킵 앵커(비학술 채용 동선) — 학술 블록을 건너뛰고 실무 이력·연락으로 ── */
+  .fr-skip-lead {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    width: fit-content;
+    margin-bottom: clamp(14px, 2.2vw, 22px);
+    font: 500 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    word-break: keep-all;
+    transition: color var(--dur) var(--ease), gap var(--dur) var(--ease);
+  }
+  .fr-skip-lead:hover { color: var(--accent-text, var(--accent)); gap: 11px; }
+  .fr-skip-lead:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ── 헤더 ── */
+  .fr-head { display: flex; flex-direction: column; gap: 12px; }
+  .fr-title { margin-top: 4px; max-width: 22ch; }
+  .fr-intro {
+    margin-top: 6px;
+    max-width: 60ch;
+    color: var(--ink-2);
+    font-size: var(--fz-md);
+    line-height: 1.8;
+    word-break: keep-all;
+  }
+
+  /* ── 3단계 STAGE 카드 ── */
+  .fr-stages {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(14px, 2vw, 20px);
+    margin-top: clamp(22px, 3vw, 34px);
+  }
+  .fr-stage { display: flex; flex-direction: column; gap: 10px; padding-block: clamp(15px, 2.2vw, 21px); }
+  .fr-stage-no {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.14em;
+    color: var(--accent-text, var(--accent));
+  }
+  .fr-stage-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-xl);
+    font-weight: 400;
+    line-height: 1.25;
+    color: var(--ink);
+    font-synthesis: none;
+    word-break: keep-all;
+  }
+  .fr-stage-desc {
+    color: var(--ink-2);
+    font-size: var(--fz-sm);
+    line-height: 1.75;
+    word-break: keep-all;
+  }
+
+  /* ── 4영역 자기참조 매핑 인스펙터 ── */
+  .fr-map-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: clamp(36px, 4.5vw, 56px);
+  }
+  .fr-map { margin-top: clamp(18px, 2.4vw, 28px); }
+
+  /* ── 케이스 색인 ── */
+  .fr-index-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: clamp(36px, 4.5vw, 56px);
+  }
+  .fr-index-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-h3);
+    font-weight: 400;
+    line-height: 1.28;
+    color: var(--ink);
+    font-synthesis: none;
+    word-break: keep-all;
+  }
+  .fr-index-intro {
+    margin-top: 4px;
+    max-width: 58ch;
+    color: var(--ink-2);
+    font-size: var(--fz-sm);
+    line-height: 1.75;
+    word-break: keep-all;
+  }
+
+  .fr-index {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(16px, 2.5vw, 28px);
+    margin-top: clamp(18px, 2.4vw, 28px);
+    align-items: start;
+  }
+
+  /* 좌: CASE 리스트 */
+  .fr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .fr-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    padding: 13px 18px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .fr-row-n {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+  }
+  .fr-row-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .fr-row-figure {
+    font-family: var(--font-display);
+    font-size: var(--fz-lg);
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--ink);
+    font-synthesis: none;
+  }
+  .fr-row-domain {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .fr-row-sec {
+    font-size: var(--fz-xs);
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+  }
+  .fr-row[aria-selected='true'] {
+    border-color: var(--accent);
+    background: var(--accent-tint);
+    /* 좌측 액센트 바 — 인셋 그림자로 레이아웃 이동 없이 강조 */
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .fr-row[aria-selected='true'] .fr-row-figure { color: var(--accent); }
+  .fr-row[aria-selected='true'] .fr-row-sec { color: var(--accent); }
+  .fr-row[aria-selected='true'] .fr-row-n { color: var(--accent); }
+  @media (hover: hover) and (pointer: fine) {
+    .fr-row:hover { border-color: var(--ink-3); }
+    .fr-row[aria-selected='true']:hover { border-color: var(--accent); }
+  }
+  .fr-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* 우: 오버레이 그리드 패널 — 모든 패널을 같은 셀에 겹쳐 높이 고정(점프 방지) */
+  .fr-pane { display: grid; }
+  .fr-panel {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: clamp(18px, 2.4vw, 26px);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+    background: var(--surface);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 130ms var(--ease), visibility 0s linear 130ms;
+  }
+  .fr-panel.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 130ms var(--ease), visibility 0s;
+  }
+  .fr-fig {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  /* 대형 도판 프레임 — 마운트된 플레이트 느낌(매트 + 내부 도판 테두리) */
+  .fr-fig-frame {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: clamp(10px, 1.5vw, 16px);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .fr-fig-media {
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  /* escher 인라인 드로스테 도판 — 재사용 Fig 들과 동일하게 컨테이너를 꽉 채움(높이 동일) */
+  .fr-droste { display: block; width: 100%; height: 100%; }
+  .fr-droste-loop { animation: fr-droste-dash 28s linear infinite; }
+  @keyframes fr-droste-dash { to { stroke-dashoffset: -900; } }
+  /* 플레이트 캡션 — 라틴 각인(CASE N — …) + 좌표(§ · 인물 · 영역) 2단 */
+  .fr-fig-cap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .fr-fig-plate {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.08em;
+    color: var(--accent-text, var(--accent));
+  }
+  .fr-fig-coord {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+  }
+  .fr-panel-body { display: flex; flex-direction: column; gap: 14px; }
+  .fr-panel-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fr-panel-tag {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    padding: 5px 11px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+  .fr-panel-cat {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.06em;
+    color: var(--accent-text, var(--accent));
+    padding: 5px 11px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+  }
+  .fr-panel-mech {
+    font-size: var(--fz-sm);
+    color: var(--accent);
+    letter-spacing: 0.01em;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+  .fr-panel-detail {
+    max-width: 60ch;
+    color: var(--ink-2);
+    font-size: var(--fz-md);
+    line-height: 1.85;
+    word-break: keep-all;
+  }
+
+  /* 3단계 스키마 불릿 — 좌측 규칙 · 라벨 열 + 본문 열 */
+  .fr-panel-bullets {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin: 0;
+    padding: 2px 0 2px 14px;
+    list-style: none;
+    border-left: 2px solid var(--border);
+  }
+  .fr-panel-bullet {
+    display: grid;
+    grid-template-columns: minmax(64px, auto) 1fr;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .fr-bullet-k {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.06em;
+    color: var(--accent-text, var(--accent));
+  }
+  .fr-bullet-t {
+    font-size: var(--fz-sm);
+    line-height: 1.7;
+    color: var(--ink-2);
+    word-break: keep-all;
+  }
+
+  /* 메타그리드 — 영역 · 위치 · 계열 · 전거(전거는 전 폭) */
+  .fr-panel-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 20px;
+    margin: 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .fr-pm-item { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .fr-pm-wide { grid-column: 1 / -1; }
+  .fr-pm-item dt {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-text, var(--accent));
+  }
+  .fr-pm-item dd {
+    margin: 0;
+    font-size: var(--fz-xs);
+    line-height: 1.65;
+    color: var(--ink-2);
+    word-break: keep-all;
+  }
+
+  .fr-hint {
+    margin-top: 14px;
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+  }
+
+  /* ── 논문 메타 행 ── */
+  .fr-paper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: clamp(40px, 5vw, 64px);
+    padding-top: clamp(24px, 3vw, 32px);
+    border-top: 1px solid var(--border);
+  }
+  .fr-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(16px, 2.5vw, 28px);
+    margin: 0;
+  }
+  .fr-meta-item { display: flex; flex-direction: column; gap: 8px; }
+  .fr-meta-label {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-text, var(--accent));
+  }
+  .fr-meta-value {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: var(--fz-sm);
+    line-height: 1.7;
+    word-break: keep-all;
+  }
+  .fr-doi {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    font: 500 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.06em;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease), gap var(--dur) var(--ease);
+  }
+  .fr-doi:hover { color: var(--accent); gap: 12px; }
+  .fr-doi:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ── 반응형 ── */
+  @media (max-width: 860px) {
+    .fr-stages { grid-template-columns: 1fr; }
+    .fr-index { grid-template-columns: 1fr; }
+    .fr-meta { grid-template-columns: 1fr; gap: 16px; }
+    /* 메타그리드는 태블릿·소형에서도 2열 유지(짧은 3항목: 영역·위치·계열).
+       .fr-pm-wide(전거)만 전 폭 — label-value 교대 리스트로 무너지는 것 방지. */
+  }
+
+  /* 최협 폰에서만 메타그리드 1열 — 3항목도 좁아 2열이 답답해지는 지점 */
+  @media (max-width: 480px) {
+    .fr-panel-meta { grid-template-columns: 1fr; }
+  }
+
+  /* ── 모션 최소화 가드 ── */
+  @media (prefers-reduced-motion: reduce) {
+    .fr-panel { transition: none; }
+    .fr-panel.is-active { transition: none; }
+    .fr-droste-loop { animation: none !important; }
+  }
+</style>
+
+<script>
+  // ── 케이스 색인 상호작용 (ARIA tabs · 크로스페이드는 CSS opacity 130ms) ──
+  //   click / mouseenter(hover:hover 매체) / ↑↓ 화살표 · Home/End.
+  //   패널은 오버레이 그리드로 겹쳐 있어 전환 시 높이가 고정된다(점프 없음).
+  const idx = document.querySelector<HTMLElement>('[data-fr-index]');
+  if (idx) {
+    const tabs = Array.from(idx.querySelectorAll<HTMLButtonElement>('.fr-row'));
+    const panels = Array.from(idx.querySelectorAll<HTMLElement>('.fr-panel'));
+    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+    const 활성화 = (key: string, focus = false) => {
+      tabs.forEach((tab) => {
+        const on = tab.dataset.key === key;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+        if (on && focus) tab.focus();
+      });
+      panels.forEach((panel) => {
+        panel.classList.toggle('is-active', panel.dataset.panel === key);
+      });
+    };
+
+    // hover intent 디바운스(70ms · 60~80ms 대역) — 마우스 스윕 시 연쇄 전환(플리커) 억제.
+    //   잠깐 스쳐가는 행은 무시하고 '머문' 행만 활성화. click/키보드는 즉시(디바운스 취소).
+    let hoverTimer: number | undefined;
+    const HOVER_INTENT = 70;
+    const clearHover = () => {
+      if (hoverTimer !== undefined) { window.clearTimeout(hoverTimer); hoverTimer = undefined; }
+    };
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => { clearHover(); 활성화(tab.dataset.key || ''); });
+      // hover 매체에서만 마우스오버로 미리 열기(터치 오작동 방지) — intent 지연 후 활성화.
+      tab.addEventListener('mouseenter', () => {
+        if (!canHover.matches) return;
+        clearHover();
+        hoverTimer = window.setTimeout(() => 활성화(tab.dataset.key || ''), HOVER_INTENT);
+      });
+      tab.addEventListener('mouseleave', clearHover);
+      tab.addEventListener('keydown', (e) => {
+        let next = -1;
+        if (e.key === 'ArrowDown') next = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowUp') next = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = tabs.length - 1;
+        if (next >= 0) {
+          e.preventDefault();
+          활성화(tabs[next].dataset.key || '', true);
+        }
+      });
+    });
+  }
+</script>

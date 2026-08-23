@@ -1,0 +1,136 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Approach.astro — 하나의 사고법(id=approach)
+//   상단: 3단계 라벨(환원 → 자기참조 → 창발)
+//   하단: domains 컬렉션 4카드 (k eyebrow + title + desc + items 키워드)
+//   · 네 도메인이 같은 3단계 형식 모델을 공유한다는 서사(TRIH 사고법)
+// ═══════════════════════════════════════════════════════════════════════════
+import { getCollection } from 'astro:content';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+// 언어중립 키워드 칩 해석 — 문자열이면 그대로, {ko,en} 객체면 locale 분기.
+const lab = (v: string | { ko: string; en: string }) => (typeof v === 'string' ? v : v[locale]);
+
+const domains = (await getCollection('domains')).sort((a, b) => a.data.no - b.data.no);
+
+// 3단계 스테이지 라벨 — ui.ts 의 section.approach.sub 를 분해하지 않고 명시 데이터로.
+const stages = [
+  { ko: '환원', en: 'Reduction' },
+  { ko: '자기참조', en: 'Self-reference' },
+  { ko: '창발', en: 'Emergence' },
+];
+---
+
+<section id="approach" class="sec approach" aria-labelledby="approach-title">
+  <div class="wrap">
+    <header class="approach-head reveal">
+      <span class="k">{t(locale, 'section.approach')}</span>
+      <h2 id="approach-title" class="d2 approach-title">{t(locale, 'section.approach.sub')}</h2>
+    </header>
+
+    <!-- 3단계 스테이지 라벨 -->
+    <ol class="stages reveal" style="--i:1;">
+      {stages.map((s, i) => (
+        <li class="stage">
+          <span class="stage-no mono">{String(i + 1).padStart(2, '0')}</span>
+          <span class="stage-name">{s[locale]}</span>
+          {i < stages.length - 1 && <span class="stage-arrow" aria-hidden="true">→</span>}
+        </li>
+      ))}
+    </ol>
+
+    <!-- 4 도메인 카드 -->
+    <div class="domain-grid">
+      {domains.map((d, i) => (
+        <article class="card domain-card reveal" style={`--i:${i % 5}`}>
+          <span class="k domain-k">{d.data.k}</span>
+          <h3 class="domain-title">{d.data.title[locale]}</h3>
+          <p class="domain-desc">{d.data.desc[locale]}</p>
+          <ul class="domain-items">
+            {d.data.items.map((it) => (
+              <li class="domain-item mono">{lab(it)}</li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .approach-head { margin-bottom: clamp(28px, 4vw, 44px); }
+  .approach-title { margin-top: 14px; max-width: 24ch; }
+
+  /* 3단계 라벨 밴드 */
+  .stages {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 20px;
+    padding: 20px 0;
+    margin-bottom: clamp(40px, 5vw, 64px);
+    border-block: 1px solid var(--border);
+  }
+  .stage { display: inline-flex; align-items: center; gap: 12px; }
+  .stage-no {
+    font-size: var(--fz-xxs);
+    color: var(--accent);
+    letter-spacing: 0.14em;
+  }
+  .stage-name {
+    font-family: var(--font-display);
+    font-size: var(--fz-xl);
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .stage-arrow { color: var(--ink-3); font-size: var(--fz-lg); margin-left: 8px; }
+
+  /* 도메인 카드 그리드 */
+  .domain-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(14px, 2vw, 22px);
+  }
+  .domain-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+  .domain-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+  .domain-k { color: var(--ink-3); }
+  .domain-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-h3);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  .domain-desc {
+    font-size: var(--fz-sm);
+    line-height: 1.7;
+    color: var(--ink-2);
+    max-width: 46ch;
+  }
+  .domain-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .domain-item {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    padding: 5px 11px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+
+  @media (max-width: 720px) {
+    .domain-grid { grid-template-columns: 1fr; }
+  }
+</style>

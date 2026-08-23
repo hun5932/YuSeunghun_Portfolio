@@ -1,0 +1,53 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Simulator.astro — AI 도입 ROI 시뮬레이터 섹션 셸
+//   RoiSimulator 아일랜드를 .sec/.wrap 셸 + 섹션 헤더로 감싼다.
+//   · 헤더 카피는 ui.ts(section.simulator) 경유 + 섹션 전용 마이크로카피.
+//   · 앵커 id=simulator (Nav 앵커에는 없으나 직접 링크·해시 이동 대비).
+// ═══════════════════════════════════════════════════════════════════════════
+import RoiSimulator from '../islands/RoiSimulator.astro';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props { locale: Locale; id?: string }
+const { locale, id = 'simulator' } = Astro.props;
+
+// 섹션 제목(짧은 명조 H2) — 섹션 랜드마크 강화(인라인 pick ko/en 리터럴)
+const title = {
+  ko: 'AI 서비스 기획 ROI 시뮬레이터',
+  en: 'AI service planning ROI simulator',
+}[locale];
+// 섹션 리드 — ui.ts 미포함 마이크로카피(안내문장 → 제목 아래 리드 톤으로 강등)
+const sub = {
+  ko: '저와 함께 AI 서비스를 기획할 때 대략 어떤 그림이 나올지 가상으로 산출해봅니다. 도메인 · 규모 · LLM 등급 · 부가 옵션을 조정해 보세요.',
+  en: 'A rough sketch of what planning an AI service with me could look like — adjust the domain, scale, LLM tier and add-on options.',
+}[locale];
+---
+
+<section class="sec simulator" id={id} aria-labelledby="sim-title">
+  <div class="wrap">
+    <header class="sim-head reveal">
+      <span class="k">{t(locale, 'section.simulator')}</span>
+      <h2 id="sim-title" class="d2 sim-title">{title}</h2>
+      <p class="sim-sub">{sub}</p>
+    </header>
+
+    <div class="sim-body reveal" style="--i:1;">
+      <RoiSimulator locale={locale} />
+    </div>
+  </div>
+</section>
+
+<style>
+  .sim-head { margin-bottom: clamp(28px, 4vw, 44px); }
+  .sim-title { margin-top: 12px; max-width: 22ch; }
+  /* 안내문장 — 제목 아래 리드 톤(FeaturedResearch .fr-intro 리듬과 정렬) */
+  .sim-sub {
+    margin-top: 12px;
+    max-width: 52ch;
+    color: var(--ink-2);
+    font-size: var(--fz-md);
+    line-height: 1.8;
+    word-break: keep-all;
+  }
+  .sim-body { margin-top: clamp(20px, 3vw, 32px); }
+</style>

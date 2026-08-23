@@ -1,0 +1,506 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Hero.astro — 홈 최상단 히어로 (v4 재작성)
+//   출처 패턴: _reference/YuSeunghun_Portfolio_v1.html L317-498 (히어로 전체)
+//   [좌] 배지(펄스 점) → 3줄 헤드라인(일반/그라디언트 강조/900웨이트)
+//        → 서브카피(keep-all) → CTA 3개(#works 채움·#research 아웃라인·#contact 텍스트)
+//        → Domain 1~4 배지 카드 4열(모바일 2열)
+//   [우] FigOrbit — 4영역 자기참조 궤도 도판
+//   · 페이지 유일 h1 유지. 스타일은 컴포넌트 <style> 스코프.
+//   · i18n: ui.ts 신규 hero.* 키 사용. 색은 시맨틱 토큰(--accent/--ink/--surface/--border)만.
+//   · CTA 는 홈 단일 페이지 앵커(#works/#research/#contact) — base 불필요(해시).
+// ═══════════════════════════════════════════════════════════════════════════
+import { t, type Locale } from '../../i18n/ui';
+import facts from '../../data/facts.json';
+import FigOrbit from '../svg/FigOrbit.astro';
+import FigDrosteV2 from '../svg/FigDrosteV2.astro';
+import FigLoop from '../svg/FigLoop.astro';
+import FigDroste from '../svg/FigDroste.astro';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+// Domain 1~4 배지 카드 (라벨·제목·서브 — ui.ts hero.d*t / hero.d*s)
+const domains = [
+  { n: 'Domain 1', title: t(locale, 'hero.d1t'), sub: t(locale, 'hero.d1s') },
+  { n: 'Domain 2', title: t(locale, 'hero.d2t'), sub: t(locale, 'hero.d2s') },
+  { n: 'Domain 3', title: t(locale, 'hero.d3t'), sub: t(locale, 'hero.d3s') },
+  { n: 'Domain 4', title: t(locale, 'hero.d4t'), sub: t(locale, 'hero.d4s') },
+];
+
+// 총체 지도형 스트립 (사용자 결정 2026-07-19, B안) — 실적 자랑이 아니라 "이 사람의 세계" 요약:
+// 4개 도메인을 가로지르고 · 7개를 만들었고 · 논문 한 편(109k)을 썼다.
+// 109k 만 facts THE-04 정본 인용, 4/7 은 사이트 구조 사실(도메인 4·프로젝트 7).
+const the04 = facts.measured.find((m) => m.factId === 'THE-04');
+const metrics = [
+  { k: 'DOMAINS', v: '4', label: { ko: '전통문화·창업·금융IT·AI 4개 도메인', en: 'Four domains: craft, startup, financial IT, AI' }[locale] },
+  { k: 'PROJECTS', v: '7', label: { ko: '자기참조적 실험·구축물 7종', en: 'Seven self-referential builds' }[locale] },
+  { k: 'THESIS', v: the04?.value ?? '109k', label: (the04?.label as Record<string, string> | undefined)?.[locale] ?? '' },
+];
+const metricsAria = { ko: '한눈 요약 — 도메인·프로젝트·논문', en: 'At a glance — domains, projects, thesis' }[locale];
+
+// CTA aria — 접근성 보조 라벨(사전 미수록 마이크로카피 → pick 리터럴)
+const ariaWorks = { ko: '선별한 프로젝트로 이동', en: 'Jump to selected projects' }[locale];
+const ariaTrih = { ko: 'TRIH 연구 섹션으로 이동', en: 'Jump to the TRIH research section' }[locale];
+const ariaContact = { ko: '연락 섹션으로 이동', en: 'Jump to the contact section' }[locale];
+// 로테이터 컨테이너 보조 라벨 (사전 미수록 마이크로카피 → pick 리터럴)
+const ariaRotate = { ko: '비주얼 전환', en: 'Switch visual' }[locale];
+---
+
+<section class="sec hero" aria-labelledby="hero-title">
+  <div class="wrap hero-in">
+    <!-- ─────────────────────────── 좌: 텍스트 컬럼 ─────────────────────────── -->
+    <div class="hero-copy">
+      <!-- 배지 + 펄스 점 -->
+      <span class="hero-badge reveal" style="--i:0;">
+        <span class="hero-badge-dot" aria-hidden="true"></span>
+        {t(locale, 'hero.badge')}
+      </span>
+
+      <!-- 3줄 헤드라인 — 페이지 유일 h1 -->
+      <h1 id="hero-title" class="hero-h1 reveal" style="--i:1;">
+        <span class="hh-a">{t(locale, 'hero.h1a')}</span>
+        <span class="hh-b">{t(locale, 'hero.h1b')}</span>
+        <span class="hh-c">{t(locale, 'hero.h1c')}</span>
+      </h1>
+
+      <!-- 서브카피 (한글 어절 단위 줄바꿈) -->
+      <p class="hero-sub reveal" style="--i:2;">{t(locale, 'hero.sub')}</p>
+
+      <!-- CTA 3개 -->
+      <div class="hero-cta reveal" style="--i:3;">
+        <a class="btn btn-primary" href="#works" aria-label={ariaWorks}>
+          {t(locale, 'hero.ctaWorks')}
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M3 8h9M8 4l4 4-4 4" />
+          </svg>
+        </a>
+        <a class="btn btn-ghost" href="#research" aria-label={ariaTrih}>
+          {t(locale, 'hero.ctaTrih')}
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M6 3v7a3 3 0 0 0 3 3M6 3a2 2 0 1 0-2 2 2 2 0 0 0 2-2Zm6 10a2 2 0 1 1-2-2 2 2 0 0 1 2 2Z" />
+          </svg>
+        </a>
+        <a class="btn btn-text" href="#contact" aria-label={ariaContact}>
+          {t(locale, 'hero.ctaContact')}
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M5 11L11 5M6 5h5v5" />
+          </svg>
+        </a>
+      </div>
+
+      <!-- SSOT 정량 신호 (facts.json 정본) — CTA 직후 above-the-fold 배치(채용자 10초 스캔) -->
+      {metrics.length > 0 && (
+        <p class="hero-metrics reveal" style="--i:4;" aria-label={metricsAria}>
+          {metrics.map((m, i) => (
+            <Fragment>
+              {i > 0 && <span class="hm-sep" aria-hidden="true">·</span>}
+              <span class="hm" title={m.label}>
+                <strong class="hm-v">{m.v}</strong>
+                <span class="hm-k">{m.k}</span>
+              </span>
+            </Fragment>
+          ))}
+        </p>
+      )}
+
+      <!-- Domain 1~4 배지 카드 -->
+      <div class="hero-domains reveal" style="--i:5;">
+        {domains.map((d) => (
+          <div class="hero-domain">
+            <span class="hero-domain-n">{d.n}</span>
+            <span class="hero-domain-t">{d.title}</span>
+            <span class="hero-domain-s">{d.sub}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- ─────────────────────── 우: 비주얼 로테이터 (4종) ─────────────────────── -->
+    <!--
+      고정 aspect-ratio 1:1 스테이지에 4개 레이어 절대배치(레이아웃 시프트 0).
+      순서: [0]FigDrosteV2(판화갤러리) [1]FigOrbit(궤도) [2]FigLoop(이상한고리) [3]FigDroste(무한줌).
+      첫 화면(is-active)은 드로스테(FigDrosteV2).
+      opacity 크로스페이드(0.8s) · 15s 자동 순환 · 클릭/Enter/Space 즉시 다음.
+      reduced-motion: 자동 순환 정지(클릭 전환만). 인디케이터 점 4개(활성 골드).
+    -->
+    <div class="hero-figure reveal" style="--i:2;">
+      <div class="hero-rotator" role="button" tabindex="0" aria-label={ariaRotate}>
+        <!-- 로테이터는 순수 장식(모든 도판 aria-hidden) — 스테이지 자체를 AT 에서 은닉, 버튼은 목적 라벨만 노출 -->
+        <div class="hr-stage" aria-hidden="true">
+          <div class="hr-layer is-active" data-layer="0"><FigDrosteV2 locale={locale} /></div>
+          <div class="hr-layer" data-layer="1"><FigOrbit locale={locale} /></div>
+          <div class="hr-layer" data-layer="2"><FigLoop locale={locale} /></div>
+          <div class="hr-layer" data-layer="3"><FigDroste locale={locale} /></div>
+        </div>
+        <div class="hr-dots" aria-hidden="true">
+          <span class="hr-dot is-active"></span>
+          <span class="hr-dot"></span>
+          <span class="hr-dot"></span>
+          <span class="hr-dot"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    /* 상단 고정 nav 여백 확보 + 넉넉한 첫 화면 리듬 */
+    padding-block: clamp(96px, 14vh, 168px) clamp(64px, 9vw, 120px);
+  }
+  .hero-in {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: clamp(32px, 6vw, 80px);
+    align-items: center;
+  }
+
+  /* [hero-reveal-consistency] above-fold 히어로 진입 연출을 전역 .reveal(스크롤 타임라인/IO 페이드)에서
+     분리 — 네이티브 scroll-driven vs IO 폴백 브라우저 무관하게 '즉시 표시'로 확정(첫인상 일관).
+     전역 .reveal 시스템은 불변(styling-infra 소관), Hero 스코프 안에서만 무력화한다.
+     reduced-motion·print 는 전역에서도 즉시표시라 무영향. 로테이터 크로스페이드(.hr-layer)는
+     .reveal 이 아니므로 그대로 유지된다. */
+  .hero :global(.reveal) {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* ── 배지 ── */
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    align-self: start;
+    background: var(--accent-tint, var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 15px;
+    font-family: var(--font-mono);
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-text, var(--accent));
+    word-break: keep-all;
+  }
+  .hero-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--accent);
+    flex: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-badge-dot { animation: hero-pulse 2s var(--ease, ease-in-out) infinite; }
+  }
+  @keyframes hero-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* ── 3줄 헤드라인 ── */
+  .hero-h1 {
+    margin-top: 24px;
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6.5vw, 5rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  .hero-h1 span { display: block; }
+  /* 1줄: 잉크 풀톤(가벼운 400웨이트) — 크레셴도는 무게(400→900)+2줄 그라디언트가 담당 */
+  .hero-h1 .hh-a { color: var(--ink); font-weight: 400; }
+  /* 2줄: 골드→보라 그라디언트 강조(text-clip·700+). 한글 합성 이탤릭 금지 */
+  .hero-h1 .hh-b {
+    font-style: normal;
+    font-weight: 700;
+    background: linear-gradient(105deg, var(--accent) 0%, var(--violet, #6b5cc4) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* 폴백: clip 미지원 브라우저 */
+    -webkit-text-fill-color: transparent;
+    width: fit-content;
+  }
+  /* 3줄: 900 웨이트 강조 */
+  .hero-h1 .hh-c { color: var(--ink); font-weight: 900; }
+
+  /* ── 서브카피 ── */
+  .hero-sub {
+    margin-top: 26px;
+    max-width: 52ch;
+    font-size: var(--fz-lg);
+    line-height: 1.75;
+    color: var(--ink-3);
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  /* ── CTA ── */
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 34px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 22px;
+    border-radius: 999px;
+    font: 600 var(--fz-xs) / 1 var(--font-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: transform var(--dur) var(--ease), background var(--dur) var(--ease),
+                color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .btn svg { transition: transform var(--dur) var(--ease); }
+  .btn-primary { background: var(--accent); color: var(--on-accent); }
+  .btn-primary:hover { background: var(--accent-2); }
+  .btn-primary:hover svg { transform: translateX(3px); }
+  .btn-ghost { color: var(--ink-2); border-color: var(--border); }
+  .btn-ghost:hover { color: var(--accent-text, var(--accent)); border-color: var(--accent); }
+  /* 3번째 CTA — ink-3 텍스트 링크에서 ghost급 테두리로 소폭 승격(works=primary 위계 유지) */
+  .btn-text { color: var(--ink-2); border-color: var(--border); padding-inline: 18px; }
+  .btn-text:hover { color: var(--accent-text, var(--accent)); border-color: var(--accent); }
+  .btn-text:hover svg { transform: translate(2px, -2px); }
+
+  /* ── Domain 배지 카드 ── */
+  .hero-domains {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 48px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border);
+  }
+  .hero-domain { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .hero-domain-n {
+    font-family: var(--font-mono);
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .hero-domain-t {
+    font-size: var(--fz-sm);
+    font-weight: 500;
+    color: var(--ink);
+    word-break: keep-all;
+    line-height: 1.35;
+  }
+  .hero-domain-s {
+    font-family: var(--font-mono);
+    font-size: var(--fz-xxs);
+    color: var(--ink-3);
+    word-break: keep-all;
+    line-height: 1.4;
+    /* 2줄분 예약 — 'JiksaTS · AI PERSO' 가 래핑돼도 4셀 베이스라인 통일(ko/en 동일) */
+    min-height: 2.8em;
+  }
+
+  /* ── SSOT 정량 신호 (CTA 직후 proof 스트립, above-the-fold) ──
+     값(수치)을 앞세워 10초 스캔 가시성 확보. 값=진한 골드 볼드, 라벨=뮤트 캡스. */
+  .hero-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 18px;
+    margin-top: clamp(22px, 3vw, 30px);
+    font-family: var(--font-mono);
+    word-break: keep-all;
+  }
+  .hero-metrics .hm { display: inline-flex; align-items: baseline; gap: 7px; }
+  .hm-sep { color: var(--border); align-self: center; }
+  .hm-k {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .hm-v {
+    font-size: var(--fz-lg);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--accent-text, var(--accent));
+    font-feature-settings: 'tnum' 1;
+    line-height: 1;
+  }
+
+  /* ── 우측 비주얼 로테이터 ── */
+  .hero-figure {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .hero-rotator {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin-inline: auto;
+    cursor: pointer;
+    border-radius: 20px;
+  }
+  .hero-rotator:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 8px;
+  }
+  /* 고정 1:1 스테이지 — 레이어 3종 절대배치라 전환 시 레이아웃 시프트 0 */
+  .hr-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+  .hr-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.8s var(--ease, ease-in-out);
+  }
+  /* 들어오는(활성) 레이어를 항상 최상단으로 → DOM 순서와 무관하게 '위에서 페이드인'으로 방향 일관
+     (3→0 되돌이 시 나가는 레이어가 위에 겹쳐 이중노출되던 것 제거) */
+  .hr-layer.is-active { opacity: 1; z-index: 2; }
+  /* 레이어 내부 도판이 스테이지를 채우도록 */
+  .hr-layer > :global(*) { width: 100%; }
+
+  /* 하단 인디케이터 점 3개 (활성 골드) */
+  .hr-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .hr-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--border);
+    transition: background var(--dur, 0.2s) var(--ease, ease-in-out),
+                transform var(--dur, 0.2s) var(--ease, ease-in-out);
+  }
+  .hr-dot.is-active {
+    background: var(--accent);
+    transform: scale(1.25);
+  }
+
+  /* 절대 규칙: 모션 최소화 선호 시 크로스페이드/점 트랜지션 즉시화(자동순환 정지는 JS) */
+  @media (prefers-reduced-motion: reduce) {
+    .hr-layer, .hr-dot { transition: none; }
+  }
+
+  /* ── 반응형 ── */
+  @media (max-width: 900px) {
+    .hero-in { grid-template-columns: 1fr; }
+    /* figure-first(order:-1) 유지 + 플렉스 크로스사이징 제거(display:block).
+       [mobile-stage-fix] width:100% 를 명시해야 그리드 아이템이 shrink-to-content(=하단 점
+       인디케이터 폭 ~52px)로 붕괴하지 않는다. margin-inline:auto 만 있으면 auto 마진이
+       justify-self:stretch 를 무력화해 스테이지가 52px 로 쪼그라들던 것을 확정 방지. 320×320. */
+    .hero-figure { display: block; order: -1; width: 100%; max-width: 320px; margin-inline: auto; }
+    .hero-rotator { width: 100%; max-width: 320px; }
+  }
+  @media (max-width: 560px) {
+    .hero-domains { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 18px; }
+  }
+  /* [mobile-caption-fit] 로테이터 4종 캡션 pill(긴 라틴 원제·nowrap)이 320px 스테이지·
+     390 뷰포트를 넘어 좌우로 잘리던 것 방지 — 모바일에서만 자간·크기 축소로 한 줄에 수납.
+     장식(aria-hidden)이라 컴포넌트별 스코프 대신 Hero 에서 :global 로 4개 클래스 일괄 조정. */
+  @media (max-width: 480px) {
+    .hero-rotator :global(.fdv2-caption),
+    .hero-rotator :global(.fo-caption),
+    .hero-rotator :global(.fd-caption),
+    .hero-rotator :global(.fl-caption) {
+      max-width: calc(100vw - 44px);
+      padding-inline: 12px;
+    }
+    .hero-rotator :global(.fdv2-caption span),
+    .hero-rotator :global(.fo-caption span),
+    .hero-rotator :global(.fd-caption span),
+    .hero-rotator :global(.fl-caption span) {
+      font-size: 9px;
+      letter-spacing: 0.04em;
+    }
+  }
+</style>
+
+<script>
+  // ── 히어로 비주얼 로테이터 ──
+  //   4레이어 opacity 크로스페이드(CSS) 제어 + 인디케이터 동기화(count=layers.length 자동).
+  //   15s 자동 순환 · 클릭/Enter/Space 즉시 다음 후 타이머 리셋.
+  //   reduced-motion: 자동 순환 정지(클릭 전환만 허용). 선호 변경 시 실시간 반영.
+  const initHeroRotator = (root: HTMLElement) => {
+    const layers = Array.from(root.querySelectorAll<HTMLElement>('.hr-layer'));
+    const dots = Array.from(root.querySelectorAll<HTMLElement>('.hr-dot'));
+    const count = layers.length;
+    if (count === 0) return;
+
+    let index = 0;
+    let timer: number | undefined;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    // 특정 인덱스 활성화(레이어·점 동기화)
+    const show = (next: number) => {
+      index = (next + count) % count;
+      layers.forEach((layer, k) => layer.classList.toggle('is-active', k === index));
+      dots.forEach((dot, k) => dot.classList.toggle('is-active', k === index));
+    };
+    const advance = () => show(index + 1);
+
+    // 자동 순환 시작/정지 — reduced-motion 시 시작하지 않음
+    const stopAuto = () => {
+      if (timer !== undefined) { window.clearInterval(timer); timer = undefined; }
+    };
+    const startAuto = () => {
+      stopAuto();
+      if (!reduce.matches) timer = window.setInterval(advance, 15000);
+    };
+
+    // 일시정지 사유 추적 — hover/focus(WCAG 2.2.2) 또는 뷰포트 이탈(배터리) 중
+    // 하나라도 있으면 자동 전환 정지. 모두 해제되면 재개.
+    const paused = { hover: false, focus: false, offscreen: false };
+    const applyAuto = () => {
+      if (paused.hover || paused.focus || paused.offscreen) stopAuto();
+      else startAuto();
+    };
+
+    // 응시/hover·포커스 중에는 자동 전환 없음(정지) — 벗어나면 재개
+    root.addEventListener('pointerenter', () => { paused.hover = true; applyAuto(); });
+    root.addEventListener('pointerleave', () => { paused.hover = false; applyAuto(); });
+    root.addEventListener('focusin', () => { paused.focus = true; applyAuto(); });
+    root.addEventListener('focusout', () => { paused.focus = false; applyAuto(); });
+
+    // 뷰포트 밖으로 나가면 타이머 정지(배터리), 다시 들어오면 상태에 맞춰 재개
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { paused.offscreen = !e.isIntersecting; applyAuto(); });
+      }, { threshold: 0 });
+      io.observe(root);
+    }
+
+    // 사용자 조작 → 즉시 다음(일시정지 상태여도 클릭/키 전환은 항상 허용) + 정지사유 반영해 재평가
+    root.addEventListener('click', () => { advance(); applyAuto(); });
+    root.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        advance();
+        applyAuto();
+      }
+    });
+    // 접근성 선호 변경 실시간 반영
+    reduce.addEventListener?.('change', applyAuto);
+
+    applyAuto();
+  };
+
+  document.querySelectorAll<HTMLElement>('.hero-rotator').forEach(initHeroRotator);
+</script>

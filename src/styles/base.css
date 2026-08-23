@@ -1,0 +1,222 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   base.css — 리셋 · 타이포 · 조판 프리미티브 (전 시안 공통)
+   ───────────────────────────────────────────────────────────────────────────
+   오직 시맨틱 토큰(--bg, --ink, --accent, --font-xx, --fz-xx, --ease…)만 소비한다.
+   원천 --pf-* 직접 참조 금지 (tokens.css 계약).
+   계약 클래스: .sec .wrap .k .d1 .d2 .card / 접근성: .skip, :focus-visible /
+              모션 게이트: prefers-reduced-motion / 리빌 유틸: .reveal
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── 리셋 ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* 고정 nav(62px) 대비 앵커 착지 보정 — nav 링크·히어로 CTA·모달 상담 앵커·스크롤스파이
+     착지 시 눈썹/제목 첫 줄이 반투명 nav 뒤로 숨지 않게. 하한 72px 은 nav 62px 초과 유지.
+     (reduced-motion 스크롤 override 는 기존 게이트 그대로.) */
+  scroll-padding-top: clamp(72px, 9vh, 88px);
+  /* 모달 lockScroll(body overflow:hidden) 로 Windows 클래식 스크롤바(~15px)가 사라질 때
+     nav·히어로가 우측 점프하던 문제 방지 — 스크롤바 폭 상시 예약(얇은 거터). */
+  scrollbar-gutter: stable;
+}
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--fz-sm);            /* 15px 대 — 밀도 있는 도록 톤 */
+  line-height: 1.75;
+  font-weight: 350;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* clip: hidden 과 달리 스크롤 컨테이너를 승격시키지 않아 sticky 라벨(Philosophy/Capabilities
+     좌측 컬럼)을 안 깨고 가로 넘침만 차단. 구형 미지원 시 visible 로 무해 폴백. */
+  overflow-x: clip;
+  /* 색모드 전환 시 부드럽게 — reduced-motion 에서 아래 게이트가 무력화 */
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+img, svg, video, canvas { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+input, select, textarea { font: inherit; color: inherit; }
+ul, ol { list-style: none; }
+::selection { background: var(--accent); color: var(--on-accent); }
+
+/* ─── 접근성 바닥선 ─── */
+:focus-visible { outline: 2px dashed var(--accent); outline-offset: 3px; }
+:focus:not(:focus-visible) { outline: none; }
+
+/* skip-link — 키보드 첫 탭에 본문 건너뛰기 */
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 999;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 12px 20px;
+  font: 500 var(--fz-xxs) / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.skip:focus { left: 8px; top: 8px; }
+
+/* ─── 전역 모션 게이트 — 접근성 최우선 ───
+   시안·컴포넌트 모션은 모두 이 게이트 뒤에 있다고 가정한다. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ═══ 조판 프리미티브 (계약 클래스) ═══ */
+
+/* 컨테이너 — max-width 1200px + 반응형 거터 */
+.wrap {
+  max-width: var(--wrap-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* 섹션 래퍼 — 수직 리듬 + 헤어라인 구분 */
+.sec {
+  padding-block: clamp(72px, 9vw, 128px);
+  position: relative;
+}
+/* 인접(+)이 아닌 일반 형제(~) — 섹션 사이에 dialog 등 비-섹션 요소가 끼어도 헤어라인 유지 */
+.sec ~ .sec { border-top: 1px solid var(--border); }
+
+/* 눈썹 라벨 (모노 캡스) — eyebrow.
+   소형(12px) 텍스트라 일반 --accent 는 minimal/tradition 라이트에서 4.5:1 미달 →
+   텍스트 전용 진한 액센트(--accent-text) 사용. 미정의 시안은 --accent 로 폴백. */
+.k {
+  font-family: var(--font-mono);
+  font-size: var(--fz-xxs);
+  font-weight: 500;
+  letter-spacing: var(--tk-kicker);   /* 섹션 눈썹 키커 트래킹 토큰 (구 0.22em) */
+  text-transform: uppercase;
+  color: var(--accent-text, var(--accent));
+  word-break: keep-all;
+}
+
+/* 디스플레이 — 큰(.d1) / 중(.d2). 한글 합성 이탤릭 금지: 강조는 무게+색으로. */
+.d1 {
+  font-family: var(--font-display);
+  font-size: var(--fz-display);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  font-weight: 300;
+  font-synthesis: none;
+  /* 한글 어절 단위 줄바꿈 — 음절 낙하('물' 홀로 개행) 방지. 라틴 롱토큰은 break-word 로 상쇄 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+.d1 em     { font-style: normal; font-weight: 500; color: var(--accent); }
+.d1 strong { font-weight: 800; letter-spacing: -0.055em; }
+
+.d2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+  line-height: 1.16;
+  letter-spacing: -0.04em;
+  font-weight: 300;
+  font-synthesis: none;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+.d2 em     { font-style: normal; font-weight: 500; color: var(--accent); }
+.d2 strong { font-weight: 800; }
+
+/* 라틴 방주 — 도록 원제. 이탤릭은 라틴 문자에만(.lat/.gloss) */
+.lat, .gloss {
+  font-family: var(--font-display-en);
+  font-style: italic;
+  color: var(--ink-3);
+}
+
+/* 카드 — 표면 + 헤어라인 */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: clamp(20px, 3vw, 28px);
+}
+
+/* 모노 유틸 (계측 표기) */
+.mono { font-family: var(--font-mono); font-weight: 400; font-feature-settings: 'tnum' 1; }
+.num  { font-family: var(--font-mono); font-weight: 500; color: var(--measure); font-feature-settings: 'tnum' 1; letter-spacing: -0.01em; }
+
+/* 헤어라인 */
+.rule    { height: 1px; background: var(--border); border: 0; }
+.rule-sm { height: 1px; background: var(--border-soft); border: 0; }
+
+/* 나열 세그먼트 — 'A · B · C' 나열이 어중간한 위치에서 개행되는 것 방지: 항목 단위로만 줄바꿈 */
+.seg { white-space: nowrap; }
+
+/* 본문 균형 줄바꿈 — 지원 브라우저 한정, 미지원 시 무해(무시) */
+p, li, dd, dt, figcaption {
+  /* 한글 어절 단위 개행 전역 — '체계'류 낱말 중간 쪼개짐 방지. 라틴 롱토큰은 break-word 로 상쇄 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+p, .lede { text-wrap: pretty; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   .reveal — 스크롤 리빌 유틸 (네이티브 scroll-driven 우선 · IO 폴백)
+   ───────────────────────────────────────────────────────────────────────────
+   안전 원칙(스펙 D 시안): JS·스크롤 미지원·인쇄 시 본문이 절대 사라지면 안 됨.
+     · 기본값은 '보임' — html.js 가 붙은 뒤에야 숨김을 허용.
+     · 지원 브라우저: animation-timeline: view() 가 등장을 구동.
+     · 미지원 브라우저: BaseLayout 의 IO 스크립트가 .is-in 을 부여 → transition.
+     · reduced-motion / print: 항상 즉시 보임.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.reveal { /* no-JS 폴백: 아무 것도 숨기지 않음 */ }
+
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  /* 상시 will-change 제거 — one-shot 등장이라 상주 합성 레이어 불필요(저사양 GPU/메모리 부담 완화). */
+}
+
+/* IO 폴백 경로 — 교차 시 .is-in 부여 */
+html.js .reveal.is-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* 네이티브 scroll-driven 경로 — 지원 브라우저에서 우선 구동 */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .reveal {
+      animation: pf-reveal linear both;
+      animation-timeline: view();
+      /* 스태거를 animation-range 시작 오프셋으로 인코딩 — scroll-driven 타임라인에선 시간값
+         animation-delay 가 무시되므로(아래 --i*55ms 는 IO 폴백 전용). --i(0~4)당 3% 지연. */
+      animation-range: entry calc(4% + var(--i, 0) * 3%) cover 22%;
+    }
+  }
+}
+@keyframes pf-reveal {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 스태거 — 부모가 --i 를 세팅하면 지연 (animation-delay/transition-delay 공용) */
+html.js .reveal { --reveal-delay: calc(var(--i, 0) * 55ms); animation-delay: var(--reveal-delay); }
+
+/* reduced-motion: 등장 애니 무력화, 즉시 보임 */
+@media (prefers-reduced-motion: reduce) {
+  html.js .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
+}
+
+/* 인쇄: 리빌 무시하고 항상 보임 */
+@media print {
+  .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
+}

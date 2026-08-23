@@ -1,0 +1,181 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// ContactForm.astro — mailto 실동작 연락 폼 (island, 바닐라 TS)
+//   포팅 원본: _reference/source_v3.1_2.html initForm() (L1573-1583) + 폼 마크업 L700-720
+//   · name/org/email/type/message → mailto: 본문 조립 → window.location.href.
+//   · 수신 주소: facts.json profile.email_academic (SSOT — 하드코딩 금지).
+//   · 봇 방지: honeypot(시각적 은닉 필드) — 채워지면 전송 취소.
+//   · JS 미동작 폴백: <noscript> 순수 mailto 링크(폼은 여전히 보이되 안내).
+//   · 라벨: 사전(t) 보유 키는 t() 경유, 미보유(소속·이메일·유형)는 로케일 리터럴.
+//     TODO(i18n): contact.org / contact.emailAddr / contact.type* 키를 ui.ts 로 승격 권장.
+// ═══════════════════════════════════════════════════════════════════════════
+import facts from '../../data/facts.json';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props { locale?: Locale }
+const { locale = 'ko' as Locale } = Astro.props;
+const ko = locale === 'ko';
+const pick = (k: string, e: string) => (ko ? k : e);
+
+const email = facts.profile.email_academic; // 학술 수신 주소
+
+// 라벨
+const lb = {
+  name: t(locale, 'contact.name'),
+  message: t(locale, 'contact.message'),
+  send: t(locale, 'contact.email'),
+  org: pick('소속', 'Organization'),
+  emailAddr: pick('이메일', 'Email'),
+  type: pick('문의 유형', 'Inquiry type'),
+  msgPlaceholder: pick(
+    '프로젝트·일정·기대 결과를 자유롭게 적어주세요. 위 시뮬레이터 결과를 붙여넣으면 더 정확히 답할 수 있습니다.',
+    'Feel free to describe the project, timeline and expected outcome. Paste the simulator result above for a more precise reply.'
+  ),
+  fallback: pick('폼이 동작하지 않으면 다음 주소로 바로 메일 주세요:', 'If the form does not work, email me directly at:'),
+};
+
+// 문의 유형 옵션 (value 는 mailto 본문에 노출될 라벨과 분리)
+const types = [
+  { v: 'job',  l: pick('채용·계약 (AI PM/PO · LLM Engineer · 인프라 운영)', 'Hiring / contract (AI PM/PO · LLM Engineer · Infra ops)') },
+  { v: 'proj', l: pick('AI 서비스 기획·구축 의뢰', 'AI service planning / build request') },
+  { v: 'res',  l: pick('학술 연구 협업 (TRIH · Mechanistic Interp.)', 'Research collaboration (TRIH · Mechanistic Interp.)') },
+  { v: 'etc',  l: pick('기타', 'Other') },
+];
+
+// mailto 본문 라벨(클라이언트로 전달)
+const fieldL = {
+  name: pick('이름', 'Name'),
+  org: pick('소속', 'Organization'),
+  reply: pick('회신', 'Reply-to'),
+  type: pick('유형', 'Type'),
+  subjectPrefix: pick('[포트폴리오]', '[Portfolio]'),
+};
+---
+
+<form class="cform" id="cform" data-email={email} data-fieldl={JSON.stringify(fieldL)}>
+  <!-- honeypot: 사람 눈에 안 보임 · 봇만 채움 -->
+  <div class="hp" aria-hidden="true">
+    <label for="c-website">Website</label>
+    <input type="text" id="c-website" name="website" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <div class="row2">
+    <div class="field">
+      <label for="c-name">{lb.name}</label>
+      <input type="text" id="c-name" required autocomplete="name" />
+    </div>
+    <div class="field">
+      <label for="c-org">{lb.org}</label>
+      <input type="text" id="c-org" autocomplete="organization" />
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="c-mail">{lb.emailAddr}</label>
+    <input type="email" id="c-mail" required autocomplete="email" />
+  </div>
+
+  <div class="field">
+    <label for="c-type">{lb.type}</label>
+    <select id="c-type">
+      {types.map((tp) => <option value={tp.v}>{tp.l}</option>)}
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="c-msg">{lb.message}</label>
+    <textarea id="c-msg" required rows="5" placeholder={lb.msgPlaceholder}></textarea>
+  </div>
+
+  <button type="submit" class="cform-send">
+    {lb.send}
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" /></svg>
+  </button>
+
+  <noscript>
+    <p class="cform-fallback">{lb.fallback} <a href={`mailto:${email}`}>{email}</a></p>
+  </noscript>
+</form>
+
+<style>
+  .cform { display: flex; flex-direction: column; gap: 16px; }
+
+  /* honeypot — 화면·스크린리더에서 숨김(off-screen), display:none 은 일부 봇이 회피하므로 지양 */
+  .hp {
+    position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+
+  .cform label {
+    font: 400 var(--fz-xxs) / 1 var(--font-mono);
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .cform input,
+  .cform select,
+  .cform textarea {
+    font: 400 var(--fz-sm) / 1.5 var(--font-body);
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 13px;
+    width: 100%;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  }
+  .cform textarea { resize: vertical; min-height: 120px; }
+  .cform input:focus,
+  .cform select:focus,
+  .cform textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-tint);
+  }
+
+  .cform-send {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 18px; border-radius: 999px;
+    background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent);
+    font: 500 var(--fz-xs) / 1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background var(--dur) var(--ease), opacity var(--dur) var(--ease);
+  }
+  .cform-send:hover { background: var(--accent-2); }
+  .cform-send:focus-visible { outline: 2px dashed var(--accent); outline-offset: 2px; }
+
+  .cform-fallback { font-size: var(--fz-sm); color: var(--ink-2); }
+  .cform-fallback a { color: var(--accent); text-decoration: underline; }
+
+  @media (max-width: 560px) {
+    .row2 { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+  // ── mailto 조립 전송 (원본 initForm 이식 + honeypot 게이트) ──
+  const form = document.getElementById('cform') as HTMLFormElement | null;
+  if (form) {
+    const email = form.dataset.email || '';
+    const F = JSON.parse(form.dataset.fieldl || '{}') as {
+      name: string; org: string; reply: string; type: string; subjectPrefix: string;
+    };
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      // honeypot: 채워졌으면 봇 — 조용히 무시
+      const hp = document.getElementById('c-website') as HTMLInputElement | null;
+      if (hp && hp.value.trim() !== '') return;
+
+      const val = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null)?.value ?? '';
+      const name = val('c-name'), org = val('c-org'), mail = val('c-mail'), msg = val('c-msg');
+      const typeSel = document.getElementById('c-type') as HTMLSelectElement | null;
+      const typeLabel = typeSel?.selectedOptions[0]?.textContent ?? '';
+
+      const subject = encodeURIComponent(`${F.subjectPrefix} ${typeLabel} — ${name}`);
+      const body = encodeURIComponent(
+        `${F.name}: ${name}\n${F.org}: ${org}\n${F.reply}: ${mail}\n${F.type}: ${typeLabel}\n\n${msg}`
+      );
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    });
+  }
+</script>

@@ -1,0 +1,9 @@
+# robots.txt — 유승훈 포트폴리오 (GitHub Pages 프로젝트 사이트)
+# 전체 크롤 허용. 사이트맵은 @astrojs/sitemap 이 빌드시 생성하는 인덱스를 가리킨다.
+
+User-agent: *
+Allow: /
+
+# sitemap-index.xml → sitemap-0.xml (@astrojs/sitemap 기본 산출물)
+# site + base 절대경로여야 크롤러가 인식한다.
+Sitemap: https://hun5932.github.io/YuSeunghun_Portfolio/sitemap-index.xml

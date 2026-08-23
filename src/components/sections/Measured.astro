@@ -1,0 +1,70 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Measured.astro — 계측된 것(스탯 밴드)
+//   facts.json measured 6종 = 셀 수 있는 실물만. 모노 숫자(.num) + 라벨.
+//   승훈 '실물검증' 원칙: 자기보고가 아니라 계측치 → 숫자에 --measure 색.
+// ═══════════════════════════════════════════════════════════════════════════
+import facts from '../../data/facts.json';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+const stats = facts.measured;
+---
+
+<section class="sec measured" aria-labelledby="measured-title">
+  <div class="wrap">
+    <header class="measured-head reveal">
+      <span class="k">{t(locale, 'section.measured')}</span>
+      <p id="measured-title" class="measured-sub d2">{t(locale, 'section.measured.sub')}</p>
+    </header>
+
+    <ul class="stat-band">
+      {stats.map((s, i) => (
+        <li class="stat reveal" style={`--i:${i % 5}`}>
+          <span class="stat-num num">{s.value}</span>
+          <span class="stat-label">{s.label[locale]}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .measured-head { margin-bottom: clamp(32px, 5vw, 56px); }
+  .measured-sub { margin-top: 14px; max-width: 22ch; }
+
+  .stat-band {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;                     /* 헤어라인 그리드 */
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+  }
+  .stat {
+    background: var(--bg);
+    padding: clamp(22px, 3vw, 34px) clamp(18px, 2.4vw, 28px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .stat-num {
+    font-size: clamp(2rem, 4.4vw, 3.1rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .stat-label {
+    font-size: var(--fz-xs);
+    line-height: 1.5;
+    color: var(--ink-3);
+    max-width: 30ch;
+  }
+
+  @media (max-width: 780px) {
+    .stat-band { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 460px) {
+    .stat-band { grid-template-columns: 1fr; }
+  }
+</style>

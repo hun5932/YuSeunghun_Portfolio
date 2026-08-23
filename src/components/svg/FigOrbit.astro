@@ -1,0 +1,145 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// FigOrbit.astro — 히어로 우측 오빗 도판 (TRIH 4영역 자기참조 궤도)
+//   출처 패턴: _reference/YuSeunghun_Portfolio_v1.html L415-488 (labelled orbit)
+//   · 회전 링 2개(정방향 60s / 역방향 40s) + figure-8 이상한 고리 경로
+//   · 4방향 노드: VISUAL(에셔·상) / AUDITORY(바흐·우) / LOGIC(괴델·하) / COMPUTE(트랜스포머·좌)
+//   · 중앙 코어 "TRIH / RECURSIVE EMERGENCE" + 자기참조 화살표 + 하단 캡션 pill
+//   · 하드코딩 색(#806832 gold / #4a3d96 violet) → var(--accent) / var(--violet,폴백) 토큰화
+//   · 순수 장식(aria-hidden). JS 0, CSS @keyframes 회전/펄스만. reduced-motion 전 정지.
+// props:
+//   locale : 캡션 pill 언어 (기본 'ko') — 캡션은 영문 학술명이므로 실질 동일
+//   class  : 배치용 유틸 클래스 패스스루
+// ═══════════════════════════════════════════════════════════════════════════
+interface Props {
+  locale?: 'ko' | 'en';
+  class?: string;
+}
+const { class: className = '' } = Astro.props;
+// 고유 id 프리픽스 — 한 페이지 다중 인스턴스 gradient/marker 충돌 방지
+const uid = 'fo-' + Math.random().toString(36).slice(2, 8);
+
+// 4 도메인 노드 (좌표·도메인·인물·색축). gold=시각/청각, violet=논리/계산.
+const nodes = [
+  { cx: 200, cy: 60,  dom: 'VISUAL',   fig: 'Escher',      axis: 'gold',   anchor: 'middle', tx: 200, ty: 46,  fy: 34,  pos: 'top'    },
+  { cx: 340, cy: 200, dom: 'AUDITORY', fig: 'Bach',        axis: 'gold',   anchor: 'start',  tx: 354, ty: 200, fy: 212, pos: 'right'  },
+  { cx: 200, cy: 340, dom: 'LOGIC',    fig: 'Gödel',       axis: 'violet', anchor: 'middle', tx: 200, ty: 368, fy: 380, pos: 'bottom' },
+  { cx: 60,  cy: 200, dom: 'COMPUTE',  fig: 'Transformer', axis: 'violet', anchor: 'end',    tx: 46,  ty: 200, fy: 212, pos: 'left'   },
+] as const;
+const stroke = (axis: string) => (axis === 'gold' ? 'var(--accent)' : 'var(--violet, #6b5cc4)');
+---
+
+<div class={`fig-orbit ${className}`} aria-hidden="true">
+  {/* viewBox 좌우 -48/+48 여백 — 좌우 노드 라벨(COMPUTE/AUDITORY)이 400 경계를 넘어 잘리는 것 방지 */}
+  <svg viewBox="-48 0 496 400" class="fig-orbit-svg" focusable="false">
+    <defs>
+      <linearGradient id={`${uid}-g`} x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" style="stop-color:var(--accent)" />
+        <stop offset="100%" style="stop-color:var(--violet, #6b5cc4)" />
+      </linearGradient>
+      <radialGradient id={`${uid}-c`}>
+        <stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28" />
+        <stop offset="100%" style="stop-color:var(--accent);stop-opacity:0" />
+      </radialGradient>
+      <marker id={`${uid}-arrow`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+        <path d="M 0,0 L 10,5 L 0,10 z" fill="var(--accent)" />
+      </marker>
+    </defs>
+
+    {/* 중심 글로우 */}
+    <circle cx="200" cy="200" r="180" fill={`url(#${uid}-c)`} />
+
+    {/* 바깥 점선 링 — 정방향 회전(60s) */}
+    <g class="fo-spin" style="transform-origin:200px 200px">
+      <circle cx="200" cy="200" r="170" fill="none" stroke="var(--accent)" stroke-width="0.8" stroke-dasharray="2 8" opacity="0.6" />
+    </g>
+
+    {/* 이상한 고리 본체(figure-8 계열) 2겹 — 역방향 회전(40s) */}
+    <g class="fo-spin-rev" style="transform-origin:200px 200px">
+      <path d="M 200,80 C 280,80 320,140 320,200 C 320,260 280,320 200,320 C 120,320 80,260 80,200 C 80,140 120,80 200,80 Z"
+            fill="none" stroke={`url(#${uid}-g)`} stroke-width="1.5" class="fo-loop" />
+      <path d="M 200,120 C 260,120 280,160 280,200 C 280,240 260,280 200,280 C 140,280 120,240 120,200 C 120,160 140,120 200,120 Z"
+            fill="none" stroke="var(--accent)" stroke-width="0.8" opacity="0.55" />
+    </g>
+
+    {/* 4 도메인 노드 (펄스 점 + 라벨) */}
+    {nodes.map((n) => (
+      <g>
+        <circle cx={n.cx} cy={n.cy} r="6" fill={stroke(n.axis)} class="fo-node" style={`transform-origin:${n.cx}px ${n.cy}px`} />
+        <text x={n.tx} y={n.ty} text-anchor={n.anchor} fill={stroke(n.axis)} font-size="9"
+              style="font-family:var(--font-display-en);letter-spacing:2px">{n.dom}</text>
+        <text x={n.tx} y={n.fy} text-anchor={n.anchor} fill="var(--ink)" font-size="7.5"
+              style="font-family:var(--font-body);font-weight:500">{n.fig}</text>
+      </g>
+    ))}
+
+    {/* 자기참조 코어 */}
+    <circle cx="200" cy="200" r="36" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.5" />
+    <text x="200" y="196" text-anchor="middle" fill="var(--accent)" font-size="12"
+          style="font-family:var(--font-display-en);font-style:italic;letter-spacing:1px">TRIH</text>
+    <text x="200" y="211" text-anchor="middle" fill="var(--ink-3)" font-size="5.5" letter-spacing="1.5">RECURSIVE EMERGENCE</text>
+
+    {/* 자기 자신을 가리키는 화살표 — 자기참조 모티프 */}
+    <g opacity="0.5">
+      <path d="M 220,182 Q 250,162 240,200 Q 232,220 212,210" fill="none" stroke="var(--accent)" stroke-width="1" marker-end={`url(#${uid}-arrow)`} />
+    </g>
+  </svg>
+
+  {/* 하단 캡션 pill */}
+  <div class="fo-caption">
+    <span>Threshold&nbsp;Recursive&nbsp;Isomorphism&nbsp;Hypothesis</span>
+  </div>
+</div>
+
+<style>
+  .fig-orbit {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin-inline: auto;
+    aspect-ratio: 1 / 1;
+  }
+  .fig-orbit-svg { display: block; width: 100%; height: 100%; }
+
+  /* 하단 캡션 pill — 도판 아래 가운데 겹침 */
+  .fo-caption {
+    position: absolute;
+    left: 50%;
+    bottom: 4%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 16px;
+    white-space: nowrap;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
+  }
+  .fo-caption span {
+    font-family: var(--font-mono);
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-text, var(--accent));
+  }
+
+  /* 회전 링 — 정방향 60s / 역방향 40s */
+  .fo-spin     { animation: fo-rot 60s linear infinite; }
+  .fo-spin-rev { animation: fo-rot 40s linear infinite reverse; }
+  @keyframes fo-rot { to { transform: rotate(360deg); } }
+
+  /* 이상한 고리 대시 흐름 */
+  .fo-loop { stroke-dasharray: 4 6; animation: fo-dash 30s linear infinite; }
+  @keyframes fo-dash { to { stroke-dashoffset: -1000; } }
+
+  /* 노드 펄스 */
+  .fo-node { animation: fo-pulse 2.6s var(--ease, ease-in-out) infinite; }
+  @keyframes fo-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.55; transform: scale(1.35); }
+  }
+
+  /* 절대 규칙: 모션 최소화 선호 시 전 애니메이션 정지 */
+  @media (prefers-reduced-motion: reduce) {
+    .fo-spin, .fo-spin-rev, .fo-loop, .fo-node { animation: none !important; }
+  }
+</style>

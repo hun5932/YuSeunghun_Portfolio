@@ -1,0 +1,74 @@
+---
+// ThemeSwitcher.astro — 색 모드(light/dark) 토글.
+// 저장 키는 시안별 네임스페이스: pf-theme-{variant} (시안마다 기본 테마가 다름).
+// 실제 색 전환은 :root[data-variant][data-theme] 에서 시안 CSS 가 담당.
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+---
+
+<button
+  class="theme-switch"
+  type="button"
+  aria-label={t(locale, 'a11y.themeToggle')}
+  aria-pressed="false"
+  data-theme-switch
+>
+  <!-- 해 (light) -->
+  <svg class="ic ic-sun" viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+    <circle cx="10" cy="10" r="3.6" />
+    <path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6L16 16M16 4l-1.4 1.4M5.4 14.6L4 16" stroke-linecap="round" />
+  </svg>
+  <!-- 달 (dark) -->
+  <svg class="ic ic-moon" viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+    <path d="M16.5 11.2A6.8 6.8 0 018.8 3.5a6.8 6.8 0 100 13 6.8 6.8 0 007.7-5.3z" stroke-linejoin="round" />
+  </svg>
+</button>
+
+<style>
+  .theme-switch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--ink-2);
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .theme-switch:hover { color: var(--ink); border-color: var(--ink-3); }
+  .theme-switch .ic { position: absolute; }
+  /* 현재 테마에 따라 아이콘 하나만 노출 — 클릭 시 '전환될 대상'을 보여준다 */
+  :root[data-theme='light'] .theme-switch .ic-sun  { display: none; }
+  :root[data-theme='light'] .theme-switch .ic-moon { display: block; }
+  :root[data-theme='dark']  .theme-switch .ic-sun  { display: block; }
+  :root[data-theme='dark']  .theme-switch .ic-moon { display: none; }
+
+  /* 터치타깃 확대 (≤560px): 34px 시각 원 유지, 투명 ::before 로 탭영역만 ~42px 확대. 라이트 시각 불변. */
+  @media (max-width: 560px) {
+    .theme-switch { position: relative; }
+    .theme-switch::before { content: ''; position: absolute; inset: -4px; border-radius: inherit; }
+  }
+</style>
+
+<script>
+  // 색 모드 토글 — <html data-theme> 스왑 + 시안별 localStorage 저장
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-switch]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const el = document.documentElement;
+      const variant = el.getAttribute('data-variant') ?? 'minimal';
+      const next = el.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      el.setAttribute('data-theme', next);
+      btn.setAttribute('aria-pressed', String(next === 'dark'));
+      try {
+        localStorage.setItem('pf-theme-' + variant, next);
+      } catch (e) {
+        /* 저장 차단 무시 */
+      }
+    });
+    // 초기 aria-pressed 동기화
+    btn.setAttribute('aria-pressed', String(document.documentElement.getAttribute('data-theme') === 'dark'));
+  });
+</script>

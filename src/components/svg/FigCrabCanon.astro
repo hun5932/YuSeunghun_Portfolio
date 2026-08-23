@@ -1,0 +1,70 @@
+---
+// FigCrabCanon.astro — TRIH §4 바흐 크랩 캐논(게 카논) 구조도
+//   같은 선율을 한 성부는 정방향(forward), 다른 성부는 역방향(retrograde)으로 —
+//   상단 화살표 왼→오 / 하단 오→왼 · 중앙 대칭축 · 음표 추상 점렬.
+//   패턴 준수: viewBox 0 0 400 300 · 색 전량 var() 토큰 · uid 프리픽스 충돌 방지.
+interface Props { class?: string }
+const { class: className = '' } = Astro.props;
+const uid = 'fcc-' + Math.random().toString(36).slice(2, 8);
+
+// 추상 음표 점렬 — 한 선율(x, y). 하단 성부는 이 배열을 좌우/상하로 반사해 재사용.
+const notes = [
+  { x: 70, y: 78 }, { x: 108, y: 62 }, { x: 146, y: 92 }, { x: 184, y: 70 },
+  { x: 222, y: 100 }, { x: 260, y: 66 }, { x: 298, y: 86 }, { x: 336, y: 74 },
+];
+---
+<svg viewBox="0 0 400 300" class={`pf-fig ${className}`} role="img"
+     aria-label="Crab Canon — forward / retrograde: 같은 선율이 정방향과 역방향으로 대칭 진행"
+     focusable="false" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id={`${uid}-g`} x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" style="stop-color:var(--accent);stop-opacity:.14" />
+      <stop offset="50%" style="stop-color:var(--surface);stop-opacity:0" />
+      <stop offset="100%" style="stop-color:var(--violet, #6b5cc4);stop-opacity:.14" />
+    </linearGradient>
+    <marker id={`${uid}-ar`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0,0 L 10,5 L 0,10 z" fill="var(--accent)" />
+    </marker>
+    <marker id={`${uid}-ai`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0,0 L 10,5 L 0,10 z" fill="var(--violet, #6b5cc4)" />
+    </marker>
+  </defs>
+  <rect width="400" height="300" fill="var(--surface)" />
+  <rect width="400" height="300" fill={`url(#${uid}-g)`} />
+
+  {/* 중앙 대칭축 (거울) */}
+  <line x1="200" y1="34" x2="200" y2="266" stroke="var(--ink-3)" stroke-width="0.8"
+        stroke-dasharray="3 5" opacity="0.55" />
+  <text x="200" y="158" text-anchor="middle" fill="var(--ink-3)" font-size="8" opacity="0.7"
+        style="font-family:var(--font-mono);letter-spacing:2px">axis</text>
+
+  {/* 상단 성부 — forward (왼 → 오) */}
+  <g>
+    <polyline points={notes.map((n) => `${n.x},${n.y}`).join(' ')}
+              fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.5" />
+    {notes.map((n) => (
+      <circle cx={n.x} cy={n.y} r="3.2" fill="var(--accent)" opacity="0.85" />
+    ))}
+    <line x1="60" y1="46" x2="340" y2="46" stroke="var(--accent)" stroke-width="1.4"
+          marker-end={`url(#${uid}-ar)`} opacity="0.8" />
+    <text x="60" y="38" fill="var(--accent)" font-size="10"
+          style="font-family:var(--font-display-en);font-style:italic;letter-spacing:2px">forward</text>
+  </g>
+
+  {/* 하단 성부 — retrograde (오 → 왼) · 상단 선율을 상하·좌우 반사 */}
+  <g>
+    <polyline points={notes.map((n) => `${400 - n.x},${300 - n.y}`).join(' ')}
+              fill="none" stroke="var(--violet, #6b5cc4)" stroke-width="1.4" opacity="0.5" />
+    {notes.map((n) => (
+      <circle cx={400 - n.x} cy={300 - n.y} r="3.2" fill="var(--violet, #6b5cc4)" opacity="0.85" />
+    ))}
+    <line x1="340" y1="254" x2="60" y2="254" stroke="var(--violet, #6b5cc4)" stroke-width="1.4"
+          marker-end={`url(#${uid}-ai)`} opacity="0.8" />
+    <text x="340" y="272" text-anchor="end" fill="var(--violet, #6b5cc4)" font-size="10"
+          style="font-family:var(--font-display-en);font-style:italic;letter-spacing:2px">retrograde</text>
+  </g>
+
+  <text x="200" y="292" text-anchor="middle" fill="var(--ink-3)" font-size="8.5" opacity="0.75"
+        style="font-family:var(--font-mono);letter-spacing:1.5px">Crab Canon — forward / retrograde</text>
+</svg>
+<style>.pf-fig{display:block;width:100%;height:100%}</style>

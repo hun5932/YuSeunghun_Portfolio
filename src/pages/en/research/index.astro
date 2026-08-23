@@ -1,0 +1,28 @@
+---
+// en/research/index.astro — Research track (en).
+// Shares ResearchTrack with the ko page; only locale='en' differs.
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ResearchTrack from '../../../components/tracks/ResearchTrack.astro';
+import { t } from '../../../i18n/ui';
+import facts from '../../../data/facts.json';
+
+const locale = 'en' as const;
+const title = `${facts.profile.name.en} — ${t(locale, 'track.research')}`;
+const description =
+  'Research track on TRIH (Threshold Recursive Isomorphism Hypothesis): four domains — Escher, Bach, Gödel, transformers — treated under one three-stage formal model, with public scholarly records.';
+
+// ScholarlyArticle JSON-LD — 논문 SSOT(publications/trih)에서 문구를 끌어와 날조 방지.
+const pub = await getEntry('publications', 'trih');
+const article = {
+  headline: pub!.data.titleEn,
+  datePublished: '2026-06',
+  doi: '10.5281/zenodo.21006608',
+  url: facts.profile.links.zenodo,
+  abstract: pub!.data.abstract?.en,
+};
+---
+
+<BaseLayout locale={locale} title={title} description={description} schema="scholarly" article={article}>
+  <ResearchTrack locale={locale} />
+</BaseLayout>

@@ -1,0 +1,161 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// Philosophy.astro — 철학(id=philosophy)
+//   [좌 sticky] 라벨 + 제목(philosophy.title) + 3원칙(형식적 동형성 / 3단계 스키마 /
+//               이론↔실무 상호검증) — 숫자 나열 없이 원칙명 앵커로.
+//   [우] domains 컬렉션 4카드 (k eyebrow + title + desc + items 키워드).
+//   · Approach.astro 의 카드 렌더를 참고하되(Approach 자체는 무수정) 독립 마크업/스타일.
+//   · 서사: 넓게 발산·깊게 몰입·분야를 가로지르는 패턴 인식이라는 하나의 방법론.
+// ═══════════════════════════════════════════════════════════════════════════
+import { getCollection } from 'astro:content';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+// 언어중립 키워드 칩 해석 — 문자열이면 그대로, {ko,en} 객체면 locale 분기.
+const lab = (v: string | { ko: string; en: string }) => (typeof v === 'string' ? v : v[locale]);
+
+const domains = (await getCollection('domains')).sort((a, b) => a.data.no - b.data.no);
+
+// 3원칙 — 각 원칙은 제목(t)과 서술(d). 번호 대신 원칙명이 앵커. (숫자 나열 금지)
+const principles = [
+  { t: 'philosophy.p1t', d: 'philosophy.p1' },
+  { t: 'philosophy.p2t', d: 'philosophy.p2' },
+  { t: 'philosophy.p3t', d: 'philosophy.p3' },
+] as const;
+---
+
+<section id="philosophy" class="sec philosophy" aria-labelledby="philosophy-title">
+  <div class="wrap philosophy-in">
+    <!-- 좌: sticky 라벨 + 제목 + 3원칙 -->
+    <div class="philosophy-lead">
+      <div class="philosophy-lead-inner reveal">
+        <span class="k">{t(locale, 'philosophy.label')}</span>
+        <h2 id="philosophy-title" class="d2 philosophy-title">{t(locale, 'philosophy.title')}</h2>
+
+        <ul class="principles">
+          {principles.map((p, i) => (
+            <li class="principle" style={`--i:${i + 1}`}>
+              <span class="principle-mark" aria-hidden="true"></span>
+              <div class="principle-body">
+                <span class="principle-name">{t(locale, p.t)}</span>
+                <p class="principle-desc">{t(locale, p.d)}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <!-- 우: 4 도메인 카드 -->
+    <div class="domain-grid">
+      {domains.map((d, i) => (
+        <article class="card domain-card reveal" style={`--i:${i % 5}`}>
+          <span class="k domain-k">{d.data.k}</span>
+          <h3 class="domain-title">{d.data.title[locale]}</h3>
+          <p class="domain-desc">{d.data.desc[locale]}</p>
+          <ul class="domain-items">
+            {d.data.items.map((it) => (
+              <li class="domain-item mono">{lab(it)}</li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .philosophy-in {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(36px, 5vw, 80px);
+    align-items: start;
+  }
+
+  /* 좌측 sticky 컬럼 */
+  .philosophy-lead-inner { position: sticky; top: clamp(88px, 12vh, 128px); }
+  .philosophy-title { margin-top: 16px; max-width: 18ch; }
+
+  /* 3원칙 — 번호 없이 헤어라인 마커 + 원칙명 + 서술 */
+  .principles {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: clamp(28px, 3.5vw, 40px);
+  }
+  .principle { display: flex; gap: 14px; }
+  .principle-mark {
+    flex: none;
+    width: 8px; height: 8px;
+    margin-top: 8px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background: var(--accent-tint);
+  }
+  .principle-body { display: flex; flex-direction: column; gap: 5px; }
+  .principle-name {
+    font-family: var(--font-display);
+    font-size: var(--fz-lg);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .principle-desc {
+    font-size: var(--fz-sm);
+    line-height: 1.7;
+    color: var(--ink-2);
+    max-width: 42ch;
+  }
+
+  /* 우측 도메인 카드 그리드 */
+  .domain-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(14px, 2vw, 22px);
+  }
+  .domain-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+  .domain-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+  .domain-k { color: var(--ink-3); }
+  .domain-title {
+    font-family: var(--font-display);
+    font-size: var(--fz-h3);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .domain-desc {
+    font-size: var(--fz-sm);
+    line-height: 1.7;
+    color: var(--ink-2);
+    max-width: 44ch;
+  }
+  .domain-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .domain-item {
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    padding: 5px 11px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+
+  @media (max-width: 900px) {
+    .philosophy-in { grid-template-columns: 1fr; }
+    .philosophy-lead-inner { position: static; }
+  }
+  @media (max-width: 560px) {
+    .domain-grid { grid-template-columns: 1fr; }
+  }
+</style>

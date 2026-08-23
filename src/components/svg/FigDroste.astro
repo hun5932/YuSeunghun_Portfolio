@@ -1,0 +1,168 @@
+---
+// ═══════════════════════════════════════════════════════════════════════════
+// FigDroste.astro — 히어로 우측 로테이터 3번째 레이어 (드로스테 무한 줌 착시)
+//   출처 패턴: _reference index_v2 드로스테(Droste) 무한 줌 → 정적 SVG 포팅.
+//   · 중첩 액자 12층: 각 층 scale 0.74 · rotate -6.5° 누적(자기유사 재귀).
+//   · 4도메인 라벨(시각/청각/논리/계산) 주기 반복 — 층마다 순환(gold=시각·청각 / violet=논리·계산).
+//   · 로그 나선 힌트(느린 회전) + 중앙 소실점(vanishing point) 글로우.
+//   · 무한 확대 착시: 전체 액자군을 4스텝(scale 1→1/0.74⁴≈3.334, rotate 0→26°)
+//     48s 선형 반복 → 4의 배수 시프트라 라벨/방향/획폭 모두 자기유사 정렬 → 이음매 무.
+//     안쪽 최심 4층(소실점 근처)은 중앙 글로우 디스크로 마스킹해 빈 슬롯을 은폐.
+//   · 순수 장식(aria-hidden). JS 0, CSS @keyframes 만. reduced-motion 전 정지.
+// props:
+//   locale : 라벨 언어 (기본 'ko') — 'ko' 시각/청각/논리/계산, 'en' VISUAL…
+//   class  : 배치용 유틸 클래스 패스스루
+// ═══════════════════════════════════════════════════════════════════════════
+interface Props {
+  locale?: 'ko' | 'en';
+  class?: string;
+}
+const { locale = 'ko', class: className = '' } = Astro.props;
+// 고유 id 프리픽스 — 한 페이지 다중 인스턴스 gradient/marker 충돌 방지
+const uid = 'fd-' + Math.random().toString(36).slice(2, 8);
+
+// ── 재귀 파라미터 (자기유사) ──
+const RATIO = 0.74;   // 층당 축소율
+const STEP = -6.5;    // 층당 회전(도)
+const N = 12;         // 중첩 액자 수
+const HALF = 188;     // 최외곽 액자 반변(半邊)
+
+// 4 도메인 라벨 순환 + 색축 (gold=시각/청각, violet=논리/계산)
+const domsKo = ['시각', '청각', '논리', '계산'] as const;
+const domsEn = ['VISUAL', 'AUDITORY', 'LOGIC', 'COMPUTE'] as const;
+const doms = locale === 'ko' ? domsKo : domsEn;
+const axisGold = [true, true, false, false]; // 인덱스별 gold 여부
+const col = (i: number) => (axisGold[i % 4] ? 'var(--accent)' : 'var(--violet, #6b5cc4)');
+
+// 중첩 액자 12층 — 각 층 누적 scale·rotate. 획폭/폰트/라벨y 모두 자기유사 스케일.
+const frames = Array.from({ length: N }, (_, i) => {
+  const s = Math.pow(RATIO, i);       // 누적 축소율
+  const r = STEP * i;                 // 누적 회전(도)
+  const half = HALF * s;
+  return {
+    i,
+    r: +r.toFixed(2),
+    x: +(200 - half).toFixed(2),
+    wh: +(half * 2).toFixed(2),
+    rr: +(16 * s).toFixed(2),         // 모서리 반경
+    sw: +(1.7 * s).toFixed(3),        // 획폭(그룹 줌 시 함께 확대 → 이음매 정렬)
+    ly: +(200 - half + 15 * s).toFixed(2), // 라벨 y(상단 변 안쪽)
+    fs: +(13 * s).toFixed(2),         // 라벨 폰트 크기
+    op: +Math.max(0.3, 0.9 - i * 0.055).toFixed(3), // 깊이 페이드
+    dom: doms[i % 4],
+    color: col(i),
+  };
+});
+
+// ── 로그 나선 힌트 — r(θ)=a·e^(bθ), 소실점으로 수렴. 별도 완속 회전(이음매=1회전). ──
+const B = 0.22;
+const TURNS = 2.5;
+const MAXT = TURNS * 2 * Math.PI;
+const A = 178 / Math.exp(B * MAXT);
+const spiralPts: string[] = [];
+for (let t = 0; t <= MAXT + 0.001; t += 0.14) {
+  const rad = A * Math.exp(B * t);
+  const px = 200 + rad * Math.cos(t - Math.PI / 2);
+  const py = 200 + rad * Math.sin(t - Math.PI / 2);
+  spiralPts.push(`${px.toFixed(1)},${py.toFixed(1)}`);
+}
+const spiralPath = 'M ' + spiralPts.join(' L ');
+---
+
+<div class={`fig-droste ${className}`} aria-hidden="true">
+  <svg viewBox="0 0 400 400" class="fig-droste-svg" focusable="false">
+    <defs>
+      {/* 중심 소실점 글로우 */}
+      <radialGradient id={`${uid}-c`}>
+        <stop offset="0%" style="stop-color:var(--accent);stop-opacity:.24" />
+        <stop offset="100%" style="stop-color:var(--accent);stop-opacity:0" />
+      </radialGradient>
+      {/* 소실점 마스킹 디스크 — 최심 액자 빈 슬롯 은폐(배경색으로 덮음) */}
+      <radialGradient id={`${uid}-v`}>
+        <stop offset="0%" style="stop-color:var(--bg);stop-opacity:1" />
+        <stop offset="62%" style="stop-color:var(--bg);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:var(--bg);stop-opacity:0" />
+      </radialGradient>
+    </defs>
+
+    {/* 배경 글로우 */}
+    <circle cx="200" cy="200" r="182" fill={`url(#${uid}-c)`} />
+
+    {/* 로그 나선 힌트 — 완속 회전(90s, 1회전이라 이음매 무) */}
+    <g class="fd-spiral" style="transform-origin:200px 200px">
+      <path d={spiralPath} fill="none" stroke="var(--violet, #6b5cc4)" stroke-width="0.8"
+            stroke-linecap="round" opacity="0.28" />
+    </g>
+
+    {/* 중첩 액자군 — 무한 확대 착시(48s, 4스텝 줌). transform-origin=소실점 */}
+    <g class="fd-zoom" style="transform-origin:200px 200px">
+      {frames.map((f) => (
+        <g transform={`rotate(${f.r} 200 200)`} opacity={f.op}>
+          <rect x={f.x} y={f.x} width={f.wh} height={f.wh} rx={f.rr} ry={f.rr}
+                fill={f.color} fill-opacity="0.03"
+                stroke={f.color} stroke-width={f.sw} />
+          <text x="200" y={f.ly} text-anchor="middle" fill={f.color} font-size={f.fs}
+                class="fd-label"
+                style="font-family:var(--font-display-en);letter-spacing:2px;font-synthesis:none">{f.dom}</text>
+        </g>
+      ))}
+    </g>
+
+    {/* 중앙 소실점 마스킹 디스크 + 코어 점(정적 — 줌과 무관하게 고정) */}
+    <circle cx="200" cy="200" r="40" fill={`url(#${uid}-v)`} />
+    <circle cx="200" cy="200" r="2.6" fill="var(--accent)" />
+  </svg>
+
+  {/* 하단 캡션 pill — FigOrbit 와 동일 리듬 */}
+  <div class="fd-caption">
+    <span>Droste&nbsp;·&nbsp;Infinite&nbsp;Self-Reference</span>
+  </div>
+</div>
+
+<style>
+  .fig-droste {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin-inline: auto;
+    aspect-ratio: 1 / 1;
+  }
+  .fig-droste-svg { display: block; width: 100%; height: 100%; }
+
+  /* 하단 캡션 pill */
+  .fd-caption {
+    position: absolute;
+    left: 50%;
+    bottom: 4%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 16px;
+    white-space: nowrap;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
+  }
+  .fd-caption span {
+    font-family: var(--font-mono);
+    font-size: var(--fz-xxs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-text, var(--accent));
+  }
+
+  /* 무한 확대 착시 — 4스텝 줌(scale 1→1/0.74⁴≈3.334, rotate 0→26°). 선형 무한 반복. */
+  .fd-zoom { animation: fd-zoom 48s linear infinite; }
+  @keyframes fd-zoom {
+    from { transform: scale(1) rotate(0deg); }
+    to   { transform: scale(3.334) rotate(26deg); }
+  }
+
+  /* 로그 나선 완속 회전(1회전 → 이음매 무) */
+  .fd-spiral { animation: fd-spin 90s linear infinite; }
+  @keyframes fd-spin { to { transform: rotate(360deg); } }
+
+  /* 절대 규칙: 모션 최소화 선호 시 전 애니메이션 정지 */
+  @media (prefers-reduced-motion: reduce) {
+    .fd-zoom, .fd-spiral { animation: none !important; }
+  }
+</style>
