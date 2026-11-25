@@ -34,7 +34,7 @@ _AI Service Planner · PM — practice, research, systems_
 ### Research
 
 「자기참조와 마음의 가능성」 · 임계 재귀적 동형성 가설(TRIH) — 시각·청각·논리·계산 4영역 형식 동형성.
-본문 약 109,000자 · 참고문헌 70편(peer-reviewed) · 도판 19점 자체 제작 · 영문판 3종.
+본문 약 109,000자 · 참고문헌 70편(학술지·학회 논문 37편 포함) · 도판 19점(저자 작성 11 · 인용 8) · 영문판 3종.
 
 DOI [10.5281/zenodo.21006608](https://doi.org/10.5281/zenodo.21006608) · ORCID [0009-0000-6161-7563](https://orcid.org/0009-0000-6161-7563) · [OSF](https://osf.io/69fv3/)
 

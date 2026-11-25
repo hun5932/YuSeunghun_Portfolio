@@ -111,7 +111,7 @@ export const ui = {
     'resume.title': '이력서 한눈에',
     'resume.blockCareer': '경력',
     'resume.blockEducation': '학력',
-    'resume.blockCerts': '교육 · 자격 · 병역',
+    'resume.blockCerts': '교육 · 자격 · 활동 · 병역',
     'resume.blockSkills': '기술 스킬',
 
     // ── v4 신규: 연락(Contact) — Now Open For · 라벨 ──
@@ -232,7 +232,7 @@ export const ui = {
     'resume.title': 'Résumé at a glance',
     'resume.blockCareer': 'Experience',
     'resume.blockEducation': 'Education',
-    'resume.blockCerts': 'Training · Certifications · Military',
+    'resume.blockCerts': 'Training · Certifications · Activities · Military',
     'resume.blockSkills': 'Technical skills',
 
     // ── v4 new: Contact — Now Open For · labels ──

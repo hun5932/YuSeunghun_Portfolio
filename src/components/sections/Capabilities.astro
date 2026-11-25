@@ -5,7 +5,7 @@
 //         v1 의 "9개" 헤드라인 대 6카드 불일치를 정정)
 //   2열 그리드 6카드. 카드 제목은 i18n(capabilities.c1..c6), 세부 행은 pick(ko,en) 리터럴.
 //   · 세부 항목은 v1 #skills(1225~1320)에서 이관하되, 수치는 facts.json 정본과 대조:
-//       SR 400+ (CAR-02) · SLA 34개 99.9% (CAR-03) · PKM 노트 4,300+ (SOS-01)
+//       SR 1,000+ (CAR-02) · SLA 34개 · 목표 99.9% (CAR-03) · PKM 노트 4,300+ (SOS-01)
 //     v1 의 구식/미검증 표기(SR 150+, 노트 1,200+, CSU 교환)는 폐기.
 //   · 스탯 3블록(교육시간/SR/노트)은 넣지 않는다(숫자 최소화 — 카드 내 자격 수치만 허용).
 // ═══════════════════════════════════════════════════════════════════════════
@@ -28,7 +28,7 @@ const caps: Cap[] = [
     titleKey: 'capabilities.c1',
     core: true,
     rows: [
-      { label: pick('LLM 활용', 'LLM use'),       value: 'Claude · GPT · LangGraph' },
+      { label: pick('LLM 활용', 'LLM use'),       value: 'Claude · GPT · Gemini' },
       { label: pick('프레임워크', 'Framework'),    value: 'LangChain · RAG' },
       { label: pick('통합', 'Integration'),        value: 'Claude Code · MCP' },
       { label: 'ML / DL',                          value: 'Scikit-learn · TF · Keras' },
@@ -47,7 +47,7 @@ const caps: Cap[] = [
     titleKey: 'capabilities.c3',
     rows: [
       { label: 'Python',                           value: pick('데이터 분석 · AI 구현', 'Data analysis · AI impl.') },
-      { label: pick('시각화', 'Visualization'),    value: 'Matplotlib · Seaborn · PBI' },
+      { label: pick('시각화', 'Visualization'),    value: 'Matplotlib · Seaborn' },
       { label: 'Excel',                            value: pick('VLOOKUP · 피벗 · SUMIF', 'VLOOKUP · Pivot · SUMIF') },
       { label: pick('버전관리', 'Version control'),value: 'Git · GitHub' },
     ],
@@ -55,10 +55,10 @@ const caps: Cap[] = [
   {
     titleKey: 'capabilities.c4',
     rows: [
-      // facts CAR-03: 34개 서비스 SLA 99.9%+
-      { label: 'SLA',                              value: pick('34개 서비스 · 99.9%+', '34 services · 99.9%+') },
-      // facts CAR-02: ITSM SR 누적 400건+
-      { label: 'ITSM',                             value: pick('SR 400+ 접수·분류·등록', '400+ SR intake·triage·log') },
+      // facts CAR-03: 34개 서비스 월간 SLA 보고 · 가동률 목표 99.9% (실측치 아님)
+      { label: 'SLA',                              value: pick('34개 서비스 · 목표 99.9%', '34 services · 99.9% target') },
+      // facts CAR-02: ITSM SR 누적 1,000건+ (2026.11 기준)
+      { label: 'ITSM',                             value: pick('SR 1,000+ 검토·판정·등록', '1,000+ SRs reviewed·triaged·logged') },
       { label: pick('클라우드', 'Cloud'),          value: pick('통합 클라우드 리전 운영', 'Integrated cloud region ops') },
       // facts CAR-04: 5레이어 SR 분류 체계 · ITIL
       { label: pick('변경관리', 'Change mgmt'),    value: pick('5레이어 분류 · ITIL', '5-layer taxonomy · ITIL') },
@@ -78,11 +78,11 @@ const caps: Cap[] = [
     titleKey: 'capabilities.c6',
     rows: [
       // facts LAN-01: TOEIC 775 · OPIc IM2 · 조계종 외국어 B등급
-      { label: 'TOEIC',                            value: '775' },
-      { label: 'OPIc',                             value: 'IM2' },
+      { label: 'TOEIC',                            value: '775 (2019)' },
+      { label: 'OPIc',                             value: 'IM2 (2019)' },
       { label: pick('자격', 'Certification'),      value: pick('조계종 외국어 B등급', 'Jogye lang. cert. (B)') },
-      // facts JIK-02: 30개국+ 외국인 프로그램 총괄
-      { label: pick('실무', 'Field'),              value: pick('30개국+ 프로그램 운영', 'Programs for 30+ countries') },
+      // facts JIK-02: 20개국+ 외국인 프로그램 총괄
+      { label: pick('실무', 'Field'),              value: pick('20개국+ 프로그램 운영', 'Programs for 20+ countries') },
     ],
   },
 ];

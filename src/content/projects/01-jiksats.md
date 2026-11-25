@@ -20,12 +20,12 @@ desc:
 bullets:
   ko:
     - "LLM 기반 업무 지식 시스템 'JiksaTS Master AI' 1인 기획·구축 — 운영 매뉴얼·업무 프로세스를 지식베이스로 체계화하고 LLM이 참조하는 실무 보조 시스템으로 구성"
-    - "연인원 1만+ 규모 본사 템플스테이 운영 — 30개국+ 외국인 프로그램 총괄, 15명 팀 관리"
+    - "연인원 1만+ 규모 본사 템플스테이 운영 — 20개국+ 외국인 프로그램 총괄, 시니어클럽 근무자 등 현장 인력 관리"
     - "신규 인력 온보딩·인수인계 표준화 — 흩어진 노하우를 디지털 자산으로 전환"
     - "타 사찰 사무국으로 확장 가능한 SaaS 구조로 설계"
   en:
     - "Designed & built 'JiksaTS Master AI' solo — systematized manuals and workflows into an LLM-referenced knowledge base"
-    - "Ran a 10k+ visitors/yr templestay — led programs for guests from 30+ countries, managed a team of 15"
+    - "Ran a 10k+ visitors/yr templestay — led programs for guests from 20+ countries and coordinated on-site staff, including senior-club workers"
     - "Standardized onboarding & handover — turned scattered know-how into a digital asset"
     - "Architected for SaaS extension to other temple administrative offices"
 tech:

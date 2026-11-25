@@ -1,7 +1,7 @@
 ---
 no: 3
-period: "2024.05 — 2025.03"
-periodEn: "May 2024 — Mar 2025"
+period: "2024.05 — 2025.02"
+periodEn: "May 2024 — Feb 2025"
 org:
   ko: 세타나 CETANA
   en: CETANA
